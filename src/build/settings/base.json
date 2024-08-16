@@ -1,0 +1,8 @@
+{
+    "app_name": "Waveform-Wizard",
+    "author": "LTRC-IIITH",
+    "main_module": "src/main/python/main.py",
+    "version": "1.0.0",
+    "binding": "PyQt5",
+    "hidden_imports": []
+}
