@@ -104,15 +104,23 @@ jobs:
 
     - name: Create Installer
       run: ppg installer
-
+      
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v1.0.0
+        token: ${{ secrets.RELEASE_TOKEN }}
+        files: |
+          target\Waveform-WizardSetup.exe
+          
     - name: Save Installer file
       uses: actions/upload-artifact@v3
       with:
         name: Windows Installer
-        path: target\Waveform-Wizard\Waveform-Wizard.exe
+        path: target\Waveform-WizardSetup.exe
   
     - name: Save Binary file
       uses: actions/upload-artifact@v3
       with:
         name: Windows Binary
-        path: target\Waveform-WizardSetup.exe
+        path: target\Waveform-Wizard\Waveform-Wizard.exe
