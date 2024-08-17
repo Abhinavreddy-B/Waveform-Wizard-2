@@ -91,4 +91,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Windows Binary
-        path: target\Waveform-Wizard\Waveform-Wizard.exe
+        path: target\Waveform-WizardSetup.exe
