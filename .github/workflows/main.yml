@@ -111,7 +111,7 @@ jobs:
         tag_name: v1.0.0
         token: ${{ secrets.RELEASE_TOKEN }}
         files: |
-          target\Waveform-WizardSetup.exe
+          target/Waveform-WizardSetup.exe
           
     - name: Save Installer file
       uses: actions/upload-artifact@v3
