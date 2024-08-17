@@ -16,7 +16,16 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
-
+        
+    - name: Set up Ruby
+      uses: actions/setup-ruby@v1
+      with:
+        ruby-version: '3.0'
+      
+    - name: Install FPM (for installer)
+      run: |
+        gem install fpm
+      
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -24,7 +33,7 @@ jobs:
 
     - name: Freeze Application
       run: |
-        ppg freeze --debug
+        ppg freeze
 
     - name: Create Installer
       run: |
