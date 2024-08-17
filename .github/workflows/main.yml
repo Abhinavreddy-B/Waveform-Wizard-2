@@ -3,7 +3,7 @@ on:
     tags:
       - 'v*.*.*'
 
-name: Python CI
+name: Bundle Application
 
 jobs:
   build-ubuntu:
