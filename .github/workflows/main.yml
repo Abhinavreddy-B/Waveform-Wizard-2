@@ -32,7 +32,7 @@ jobs:
 
     - name: Freeze Application
       run: |
-        ppg freeze
+        ppg freeze --debug
 
     - name: Create Installer
       run: |
@@ -76,7 +76,7 @@ jobs:
         pip install -r requirements.txt
 
     - name: Freeze Application
-      run: ppg freeze
+      run: ppg freeze --debug
 
     - name: Create Installer
       run: ppg installer
