@@ -85,7 +85,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Windows Installer
-        path: target\Waveform-Wizard.exe
+        path: target\Waveform-Wizard\Waveform-Wizard.exe
   
     - name: Save Binary file
       uses: actions/upload-artifact@v3
