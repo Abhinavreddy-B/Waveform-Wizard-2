@@ -38,3 +38,15 @@ jobs:
     - name: Create Installer
       run: |
         ppg installer
+
+    - name: Save Deb file
+      uses: actions/upload-artifact@v3
+      with:
+        name: Ubuntu Installer
+        path: target/Waveform-Wizard.deb
+  
+    - name: Save Binary file
+      uses: actions/upload-artifact@v3
+      with:
+        name: Ubuntu Binary
+        path: target/Waveform-Wizard/Waveform-Wizard
