@@ -37,6 +37,7 @@ jobs:
     - name: Create Installer
       run: |
         ppg installer
+        mv target/Waveform-Wizard.deb target/Waveform-Wizard_ubuntu-20_04.deb
       
     # - name: Create a Release
     #   uses: actions/create-release@v1
@@ -54,7 +55,7 @@ jobs:
         tag_name: ${{ github.ref_name }}
         token: ${{ secrets.RELEASE_TOKEN }}
         files: |
-          target/Waveform-Wizard.deb
+          target/Waveform-Wizard_ubuntu-20_04.deb
             
     # - name: Upload .deb to Release
     #   uses: actions/upload-release-asset@v1
@@ -64,17 +65,17 @@ jobs:
     #     asset_name: waveform-wizard-ubuntu-22.04.deb
     #     asset_content_type: application/octet-stream
   
-    - name: Save Deb file
-      uses: actions/upload-artifact@v3
-      with:
-        name: Ubuntu Installer
-        path: target/Waveform-Wizard.deb
+    # - name: Save Deb file
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: Ubuntu Installer
+    #     path: target/Waveform-Wizard.deb
   
-    - name: Save Binary file
-      uses: actions/upload-artifact@v3
-      with:
-        name: Ubuntu Binary
-        path: target/Waveform-Wizard/Waveform-Wizard
+    # - name: Save Binary file
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: Ubuntu Binary
+    #     path: target/Waveform-Wizard/Waveform-Wizard
   
   build-windows:
     runs-on: windows-2019
@@ -105,7 +106,9 @@ jobs:
       run: ppg freeze --debug
 
     - name: Create Installer
-      run: ppg installer
+      run: |
+        ppg installer
+        mv target/Waveform-WizardSetup.exe target/Waveform-Wizard-Setup_windows_10.exe
       
     - name: Release
       uses: softprops/action-gh-release@v2
@@ -113,16 +116,16 @@ jobs:
         tag_name: ${{ github.ref_name }}
         token: ${{ secrets.RELEASE_TOKEN }}
         files: |
-          target/Waveform-WizardSetup.exe
+          target/Waveform-Wizard-Setup_windows_10.exe
           
-    - name: Save Installer file
-      uses: actions/upload-artifact@v3
-      with:
-        name: Windows Installer
-        path: target\Waveform-WizardSetup.exe
+    # - name: Save Installer file
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: Windows Installer
+    #     path: target\Waveform-WizardSetup.exe
   
-    - name: Save Binary file
-      uses: actions/upload-artifact@v3
-      with:
-        name: Windows Binary
-        path: target\Waveform-Wizard\Waveform-Wizard.exe
+    # - name: Save Binary file
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: Windows Binary
+    #     path: target\Waveform-Wizard\Waveform-Wizard.exe
