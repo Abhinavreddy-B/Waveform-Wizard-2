@@ -6,56 +6,54 @@ on:
 name: Bundle Application
 
 jobs:
-  build-ubuntu:
-    runs-on: ubuntu-22.04
+  runs-on: ${{ matrix.os }}
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+  strategy:
+    matrix:
+      os: [ubuntu-20.04, ubuntu-22.04]
+      include:
+        - os: ubuntu-20.04
+          deb_file_name: Waveform-Wizard_ubuntu-20_04.deb
+        - os: ubuntu-22.04
+          deb_file_name: Waveform-Wizard_ubuntu-22_04.deb
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-        
-    - name: Set up Ruby
-      uses: actions/setup-ruby@v1
+  steps:
+  - name: Checkout code
+    uses: actions/checkout@v3
+
+  - name: Set up Python 3.12
+    uses: actions/setup-python@v4
+    with:
+      python-version: '3.12'
       
-    - name: Install FPM (for installer)
-      run: |
-        gem install fpm
-      
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+  - name: Set up Ruby
+    uses: actions/setup-ruby@v1
+    
+  - name: Install FPM (for installer)
+    run: |
+      gem install fpm
+    
+  - name: Install dependencies
+    run: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
 
-    - name: Freeze Application
-      run: |
-        ppg freeze --debug
+  - name: Freeze Application
+    run: |
+      ppg freeze --debug
 
-    - name: Create Installer
-      run: |
-        ppg installer
-        mv target/Waveform-Wizard.deb target/Waveform-Wizard_ubuntu-20_04.deb
+  - name: Create Installer
+    run: |
+      ppg installer
+      mv target/Waveform-Wizard.deb target/${{ matrix.deb_file_name }}
       
-    # - name: Create a Release
-    #   uses: actions/create-release@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-    #   with:
-    #     tag_name: v1.0.0
-    #     release_name: Release v1.0.0
-    #     draft: false
-    #     prerelease: false
-        
-    - name: Release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: ${{ github.ref_name }}
-        token: ${{ secrets.RELEASE_TOKEN }}
-        files: |
-          target/Waveform-Wizard_ubuntu-20_04.deb
+  - name: Release
+    uses: softprops/action-gh-release@v2
+    with:
+      tag_name: ${{ github.ref_name }}
+      token: ${{ secrets.RELEASE_TOKEN }}
+      files: |
+        target/${{ matrix.deb_file_name }}
             
     # - name: Upload .deb to Release
     #   uses: actions/upload-release-asset@v1
