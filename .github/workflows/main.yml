@@ -6,54 +6,56 @@ on:
 name: Bundle Application
 
 jobs:
-  strategy:
-    matrix:
-      os: [ubuntu-20.04, ubuntu-22.04]
-      include:
-        - os: ubuntu-20.04
-          deb_file_name: Waveform-Wizard_ubuntu-20_04.deb
-        - os: ubuntu-22.04
-          deb_file_name: Waveform-Wizard_ubuntu-22_04.deb
-
-  runs-on: ${{ matrix.os }}
-
-  steps:
-  - name: Checkout code
-    uses: actions/checkout@v3
-
-  - name: Set up Python 3.12
-    uses: actions/setup-python@v4
-    with:
-      python-version: '3.12'
-      
-  - name: Set up Ruby
-    uses: actions/setup-ruby@v1
+  build-ubuntu:
     
-  - name: Install FPM (for installer)
-    run: |
-      gem install fpm
-    
-  - name: Install dependencies
-    run: |
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04]
+        include:
+          - os: ubuntu-20.04
+            deb_file_name: Waveform-Wizard_ubuntu-20_04.deb
+          - os: ubuntu-22.04
+            deb_file_name: Waveform-Wizard_ubuntu-22_04.deb
 
-  - name: Freeze Application
-    run: |
-      ppg freeze --debug
+    runs-on: ${{ matrix.os }}
 
-  - name: Create Installer
-    run: |
-      ppg installer
-      mv target/Waveform-Wizard.deb target/${{ matrix.deb_file_name }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        
+    - name: Set up Ruby
+      uses: actions/setup-ruby@v1
       
-  - name: Release
-    uses: softprops/action-gh-release@v2
-    with:
-      tag_name: ${{ github.ref_name }}
-      token: ${{ secrets.RELEASE_TOKEN }}
-      files: |
-        target/${{ matrix.deb_file_name }}
+    - name: Install FPM (for installer)
+      run: |
+        gem install fpm
+      
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Freeze Application
+      run: |
+        ppg freeze --debug
+
+    - name: Create Installer
+      run: |
+        ppg installer
+        mv target/Waveform-Wizard.deb target/${{ matrix.deb_file_name }}
+        
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        token: ${{ secrets.RELEASE_TOKEN }}
+        files: |
+          target/${{ matrix.deb_file_name }}
             
     # - name: Upload .deb to Release
     #   uses: actions/upload-release-asset@v1
