@@ -545,7 +545,7 @@ class MyMainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         self.setGeometry(100, 100, 800, 600)
-        self.setWindowTitle('Wavvy')
+        self.setWindowTitle('Waveform-Wizard')
         self.showMaximized()  # Start the application in full-screen mode
 
     def createFileMenu(self):
