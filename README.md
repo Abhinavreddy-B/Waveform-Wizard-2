@@ -1,12 +1,12 @@
 # Waveform-Wizard
 
 Waveform-Wizard is a simple, fast and easy to use application to analyse sound signals
- 
+
 # Installation
 
 ## Ubuntu
 
-Download the latest installation files from [Releases](./releases) Page.
+Download the latest installation files from [Releases](https://github.com/Abhinavreddy-B/Waveform-Wizard-2/releases) Page.
 
 * For ubuntu 20.04 -> Waveform-Wizard_ubuntu-20_04.deb
 * For ubuntu 22.04 -> Waveform-Wizard_ubuntu-22_04.deb
