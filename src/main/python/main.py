@@ -1,6 +1,3 @@
-from ppg_runtime.application_context.PyQt5 import ApplicationContext, PPGLifeCycle
-from ppg_runtime.application_context import PPGStore
-
 import os
 import sys
 import threading
@@ -18,12 +15,14 @@ from dependencies.resample.main import resample
 from dependencies.SINGLE_FREQ_FILTER_FS.main import \
     SINGLE_FREQ_FILTER_FS as single_freq_filter_fs
 from dependencies.voiced_unvoiced_own.main import voiced_unvoiced_own
-# from dependencies.ZERO_TIME_WIND_SPECTRUM.main import \
-#     wind as zero_time_wind_spectrum
+from dependencies.ZERO_TIME_WIND_SPECTRUM.main import zero_time_wind_spectrum
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import \
     NavigationToolbar2QT as NavigationToolbar
+from ppg_runtime.application_context import PPGStore
+from ppg_runtime.application_context.PyQt5 import (ApplicationContext,
+                                                   PPGLifeCycle)
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QFileDialog,
                              QGroupBox, QHBoxLayout, QLabel, QMainWindow,
@@ -235,23 +234,23 @@ class AudioComponent(QGroupBox):
 
         self.set_loading_screen_in_plot()
         
-        # result_SPEC, result_HNGD_SPEC = zero_time_wind_spectrum(self.resampled_data, self.resampled_fs)
+        result_SPEC, result_HNGD_SPEC = zero_time_wind_spectrum(self.resampled_data, self.resampled_fs)
     
-        # time_bins = result_HNGD_SPEC.shape[1]
-        # tz = np.arange(time_bins) * len(self.resampled_data) / (time_bins - 1) / self.resampled_fs
-        # freq_bins = result_HNGD_SPEC.shape[0]
-        # fsn = self.resampled_fs / 2
-        # fz = np.arange(freq_bins) * fsn / (freq_bins - 1)
+        time_bins = result_HNGD_SPEC.shape[1]
+        tz = np.arange(time_bins) * len(self.resampled_data) / (time_bins - 1) / self.resampled_fs
+        freq_bins = result_HNGD_SPEC.shape[0]
+        fsn = self.resampled_fs / 2
+        fz = np.arange(freq_bins) * fsn / (freq_bins - 1)
         
-        # print('Starting', datetime.now())
-        # T, F = np.meshgrid(tz, fz)
-        # print('Ending', datetime.now())
+        print('Starting', datetime.now())
+        T, F = np.meshgrid(tz, fz)
+        print('Ending', datetime.now())
         
-        # self.ax_other.pcolormesh(T, F, abs(result_HNGD_SPEC), shading='auto')
-        # # self.ax.colorbar(label='Magnitude')
-        # self.ax_other.set_xlabel('Time')
-        # self.ax_other.set_ylabel('Frequency')
-        # self.canvas_other.draw()
+        self.ax_other.pcolormesh(T, F, abs(result_HNGD_SPEC), shading='auto')
+        # self.ax.colorbar(label='Magnitude')
+        self.ax_other.set_xlabel('Time')
+        self.ax_other.set_ylabel('Frequency')
+        self.canvas_other.draw()
 
         self.enable_radio_buttons()
 
