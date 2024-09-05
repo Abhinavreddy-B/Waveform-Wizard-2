@@ -1,0 +1,3 @@
+meta_info = {
+  'version': '1.2.2'
+}

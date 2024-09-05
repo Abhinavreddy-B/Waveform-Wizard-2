@@ -24,12 +24,14 @@ from ppg_runtime.application_context import PPGStore
 from ppg_runtime.application_context.PyQt5 import (ApplicationContext,
                                                    PPGLifeCycle)
 from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QFileDialog,
                              QGroupBox, QHBoxLayout, QLabel, QMainWindow,
                              QMenu, QMessageBox, QRadioButton, QSplitter,
-                             QTextEdit, QToolButton, QVBoxLayout, QWidget)
+                             QTextEdit, QToolButton, QVBoxLayout, QWidget, QDialog, QPushButton)
 from scipy.signal import spectrogram
 
+from version import meta_info
 
 def show_error_message(message):
     msg = QMessageBox()
@@ -65,6 +67,55 @@ def process_audio(audio):
     else:
         # Invalid audio format
         raise ValueError("Invalid audio format")
+
+class AboutInfoWindow(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("About This App")
+
+        # Create layout
+        layout = QVBoxLayout()
+
+        # Version number
+        version_label = QLabel(f"Version: {meta_info['version']}")
+        version_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(version_label)
+
+        # # Logos
+        # logo1 = QLabel()
+        # pixmap1 = QPixmap("iiith.jpeg")  # Update with actual path
+        # logo1.setPixmap(pixmap1)
+        # logo1.setAlignment(Qt.AlignCenter)
+        
+        # logo2 = QLabel()
+        # pixmap2 = QPixmap("path/to/logo2.png")  # Update with actual path
+        # logo2.setPixmap(pixmap2)
+        # logo2.setAlignment(Qt.AlignCenter)
+
+        # logo_layout = QHBoxLayout()
+        # logo_layout.addWidget(logo1)
+        # logo_layout.addWidget(logo2)
+        # layout.addLayout(logo_layout)
+
+        # Trademark/Ownership mark
+        trademark_label = QLabel("© Speech Processing Lab (SPL), IIITH. All rights reserved.")
+        trademark_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(trademark_label)
+
+        # Git repository link
+        repo_label = QLabel('<a href="https://github.com/Abhinavreddy-B/Waveform-Wizard-2">GitHub Repository</a>')
+        repo_label.setOpenExternalLinks(True)
+        repo_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(repo_label)
+
+        # Close button
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.accept)
+        layout.addWidget(close_button)
+
+        # Set layout for the dialog
+        self.setLayout(layout)
+
 
 class AudioComponent(QGroupBox):
     def __init__(self):
@@ -524,6 +575,7 @@ class MyMainWindow(QMainWindow):
     def initUI(self):
         self.createFileMenu()
         self.createOrientationMenu()
+        self.createMoreMenu()
 
         central_widget = QWidget(self)
         main_layout = QHBoxLayout(central_widget)
@@ -544,7 +596,7 @@ class MyMainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         self.setGeometry(100, 100, 800, 600)
-        self.setWindowTitle('Wavvy')
+        self.setWindowTitle('Waveform-Wizard')
         self.showMaximized()  # Start the application in full-screen mode
 
     def createFileMenu(self):
@@ -579,6 +631,13 @@ class MyMainWindow(QMainWindow):
         alignment_actions.addAction(horizontal_alignment_action)
         alignment_actions.addAction(vertical_alignment_action)
         horizontal_alignment_action.setChecked(True)
+
+    def createMoreMenu(self):
+        file_menu = self.menuBar().addMenu('More')
+
+        about_action = QAction('About', self)
+        about_action.triggered.connect(self.showAbout)
+        file_menu.addAction(about_action)
 
     def createAlignmentAction(self, text, log_text):
         alignment_action = QAction(text, self)
@@ -646,6 +705,10 @@ class MyMainWindow(QMainWindow):
             else:
                 show_error_message('Already viewing one file, open another window')
                 return
+
+    def showAbout(self):
+        win = AboutInfoWindow(self)
+        win.exec_()
 
     def refresh_left_area(self):
         self.left_component.setTitle(self.file_base_name)
