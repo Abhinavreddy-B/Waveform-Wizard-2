@@ -69,28 +69,29 @@ def zero_time_wind_spectrum(wav, fs, N=512, M=1):
     fs = 8000
     s = s / np.max(np.abs(s))
 
+    # segement the speech signal in such a way that it is one sample shift
     win_len = int(15 * fs / 1000)
     overlap = win_len - 1
-
-    # Buffer the signal
-    x, _ = buffer(s, win_len, overlap)  # 'x' will be of shape (win_len, num_frames)
+    x = np.array([s[start:start+win_len] for start in range(0,len(s)-win_len, 1)])
+    # x, _ = buffer(s, win_len, overlap)  # 'x' will be of shape (win_len, num_frames)
     
     n = np.arange(1, win_len)  # Correctly generate n for the window length
     hdwindow1 = np.concatenate(([0], 1. / (4 * np.sin(np.pi * n / (2 * win_len)))**2))
     hdwindow1 = hdwindow1 / np.max(hdwindow1)
     
     # Adjust 'hdwindow1' size to match x if necessary
-    if len(hdwindow1) != x.shape[0]:
-        hdwindow1 = np.concatenate((hdwindow1, np.zeros(x.shape[0] - len(hdwindow1))))
+    # if len(hdwindow1) != x.shape[0]:
+    #     hdwindow1 = np.concatenate((hdwindow1, np.zeros(x.shape[0] - len(hdwindow1))))
     
+    print(hdwindow1, hdwindow1[:, np.newaxis].shape, np.ones((1, x.shape[0])).shape)
     # Reshape hd_wind to match 'x'
-    hd_wind = np.tile(hdwindow1[:, np.newaxis], (1, x.shape[1]))
+    hd_wind = (np.dot(hdwindow1[:, np.newaxis], np.ones((1, x.shape[0])))).T
     
     # Multiply 'x' with 'hd_wind'
     x = x * hd_wind
 
-    y2 = np.fft.fft(x, N, axis=0)
-    y3 = np.abs(hilbert(np.abs(np.diff(np.diff(y2, axis=0), axis=0))))
+    y2 = fft(x, N)
+    y3 = np.abs(hilbert(np.abs(np.diff(np.diff(y2)))))
     y4 = y3[:, ::M]
     y4 = y4[:N//2, :]
 
@@ -99,7 +100,7 @@ def zero_time_wind_spectrum(wav, fs, N=512, M=1):
     y2, y3, y4 = None, None, None
 
     y5 = gd_fns(x, N)
-    y6 = np.diff(np.diff(y5, axis=0), axis=0)
+    y6 = np.diff(np.diff(y5))
     y6 = np.abs(hilbert(y6))
     y6 = y6[:, ::M]
     y6 = y6[:N//2, :]
@@ -111,7 +112,8 @@ def zero_time_wind_spectrum(wav, fs, N=512, M=1):
     return ZTW_SPEC, ZTW_HNGD_SPEC
 
 def gd_fns(x, N):
-    y = (np.arange(1, x.shape[0] + 1)[:, np.newaxis] * np.ones((1, x.shape[1]))) * x
+    y = np.arange(1, x.shape[0] + 1).reshape(-1, 1) * np.ones((1, x.shape[1])) * x
+    # y = (np.arange(1, x.shape[0] + 1)[:, np.newaxis] * np.ones((1, x.shape[1]))) * x
     X = fft(x, N)
     Y = fft(y, N)
     NGD = np.real(X) * np.real(Y) + np.imag(X) * np.imag(Y)
