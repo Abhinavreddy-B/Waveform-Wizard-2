@@ -7,6 +7,7 @@ from time import sleep
 import matplotlib.pyplot as plt
 import numpy as np
 import soundfile as sf
+import pickle
 from dependencies.constantQ.main import constantq
 from dependencies.formant_CGDZP.main import formant_CGDZP
 from dependencies.gammatonegram.main import gammatonegram
@@ -254,9 +255,14 @@ class AudioComponent(QGroupBox):
         self.radioButton10.setDisabled(False)
         self.radioButton11.setDisabled(False)
 
-    def update_in_background(self, func):
+    def update_in_background(self, func, callback=None):
+        def wrapped_worker():
+            func()
+            if callback:
+                callback()
+
         def background_func():
-            thread = threading.Thread(target=func)
+            thread = threading.Thread(target=wrapped_worker)
             thread.start()
         return background_func
     
@@ -561,6 +567,80 @@ class AudioComponent(QGroupBox):
         # self.ax.set_ylim(ylim[0] * 0.9, ylim[1] * 0.9)
         self.canvas_waveform.draw()
 
+    def get_active_radio_button(self):
+        radioButtons = [
+            self.radioButton2,
+            self.radioButton3,
+            self.radioButton4,
+            self.radioButton5,
+            self.radioButton6,
+            self.radioButton7,
+            # self.radioButton8
+            self.radioButton9,
+            self.radioButton10,
+            self.radioButton11,
+        ]
+        for button in radioButtons:
+            if button.isChecked():
+                return button.text()  # Returns the text of the checked radio button
+        return None
+
+    def save_file(self, file_path):
+        config = {
+            'data': self.data,
+            'fs': self.fs,
+            'resampled_data': self.resampled_data,
+            'resampled_fs': self.resampled_fs,
+            'plot_config': {
+                'x_start': self.ax_waveform.get_xlim()[0],
+                'x_end': self.ax_waveform.get_xlim()[1],
+                'y_start': self.ax_waveform.get_ylim()[0],
+                'y_end': self.ax_waveform.get_ylim()[1],
+            },
+            'other_plot_config': {
+                'plot': self.get_active_radio_button(),
+                'x_start': self.ax_other.get_xlim()[0],
+                'x_end': self.ax_other.get_xlim()[1],
+                'y_start': self.ax_other.get_ylim()[0],
+                'y_end': self.ax_other.get_ylim()[1],
+            }
+        }
+        with open(file_path, 'wb') as file:
+            pickle.dump(config, file)
+
+    def load_file(self, file_path):
+        with open(file_path, 'rb') as file:
+            config = pickle.load(file)
+        
+        self.set_data(config['data'],config['fs'])
+        
+        self.ax_waveform.set_xlim(config['plot_config']['x_start'], config['plot_config']['x_end'])
+        self.ax_waveform.set_ylim(config['plot_config']['y_start'], config['plot_config']['y_end'])
+        self.canvas_waveform.draw()
+
+        mp = {
+            'Spectogram': [self.radioButton2, self.update_spectogram_plot],
+            'Zero Time Wind Spectrum': [self.radioButton3, self.update_zero_time_wind_spectrum_plot],
+            'Gammatonegram': [self.radioButton4, self.update_gammatonegram_plot],
+            'sff': [self.radioButton5, self.update_single_freq_filter_fs],
+            'Formant Peaks': [self.radioButton6, self.update_formant_peaks],
+            'VAD': [self.radioButton7, self.update_vad_plot],
+            'Pitch Contours': [self.radioButton9, self.update_pitch_contour_plot],
+            'Constant-Q': [self.radioButton10, self.update_constantq_plot],
+            'EGG': [self.radioButton11, self.update_egg_plot],
+        }
+
+        plot_used = config['other_plot_config']['plot']
+        btn, fn = mp[plot_used]
+        btn.setChecked(True)
+
+        def callbk():
+            self.ax_other.set_xlim(config['other_plot_config']['x_start'], config['other_plot_config']['x_end'])
+            self.ax_other.set_ylim(config['other_plot_config']['y_start'], config['other_plot_config']['y_end'])
+            self.canvas_other.draw()
+
+        self.update_in_background(fn, callbk)()
+
 
 class MyMainWindow(QMainWindow):
     def __init__(self):
@@ -626,6 +706,10 @@ class MyMainWindow(QMainWindow):
         compare_action.triggered.connect(self.compareFiles)
         file_menu.addAction(compare_action)
 
+        save_action = QAction('Save File', self)
+        save_action.triggered.connect(self.saveFile)
+        file_menu.addAction(save_action)
+
     def createOrientationMenu(self):
         orientation_menu = self.menuBar().addMenu('Orientation')
 
@@ -672,24 +756,27 @@ class MyMainWindow(QMainWindow):
         options = QFileDialog.Options()
         fileName, _ = QFileDialog.getOpenFileName(self, "Load Single File", "", "All Files (*);;Text Files (*.txt)", options=options)
         if fileName:
-            if(get_file_extension(fileName) not in ['wav']):
+            if(get_file_extension(fileName) not in ['wav', 'wwc']):
                 show_error_message('File Format unsupported')
                 return
 
             if self.file_path == None:
-                self._log_action(f"Selected file: {fileName}")
-                self.file_path = fileName
-                self.file_base_name = os.path.basename(fileName)
-                self.refresh_left_area()
+                if(get_file_extension(fileName) in ['wav']):
+                    self._log_action(f"Selected file: {fileName}")
+                    self.file_path = fileName
+                    self.file_base_name = os.path.basename(fileName)
+                    self.refresh_left_area()
 
-                data, samplerate = sf.read(self.file_path)
+                    data, samplerate = sf.read(self.file_path)
 
-                first_data = process_audio(data)
-                self.left_component.set_data(first_data, samplerate)
-                
-                if has_second_channel(data) == True:
-                    second_data = data[:, 1]
-                    self.left_component.set_second_channel_data(second_data, samplerate)
+                    first_data = process_audio(data)
+                    self.left_component.set_data(first_data, samplerate)
+                    
+                    if has_second_channel(data) == True:
+                        second_data = data[:, 1]
+                        self.left_component.set_second_channel_data(second_data, samplerate)
+                else:
+                    self.left_component.load_file(fileName)
             else:
                 show_error_message('Already viewing one file, open another window')
                 return
@@ -722,6 +809,15 @@ class MyMainWindow(QMainWindow):
                 show_error_message('Already viewing one file, open another window')
                 return
 
+    def saveFile(self):
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getSaveFileName(self, "Save As", "", "Custom Files (*.wwc);;All Files (*)", options=options)
+        if fileName:
+            if not fileName.endswith('.wwc'):
+                fileName += '.wwc'
+            
+            self.left_component.save_file(fileName)
+
     def showAbout(self):
         win = AboutInfoWindow(self)
         win.exec_()
@@ -735,7 +831,6 @@ class MyMainWindow(QMainWindow):
     def _log_action(self, text):
         print(text)
         self.logs.append(text)
-
 
 if __name__ == '__main__':
     appctxt = ApplicationContext()
