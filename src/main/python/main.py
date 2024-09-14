@@ -81,21 +81,21 @@ class AboutInfoWindow(QDialog):
         version_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(version_label)
 
-        # # Logos
-        # logo1 = QLabel()
-        # pixmap1 = QPixmap("iiith.jpeg")  # Update with actual path
-        # logo1.setPixmap(pixmap1)
-        # logo1.setAlignment(Qt.AlignCenter)
+        # Logos
+        logo1 = QLabel()
+        pixmap1 = QPixmap("../icons/iiith.jpeg")  # Update with actual path
+        logo1.setPixmap(pixmap1)
+        logo1.setAlignment(Qt.AlignCenter)
         
-        # logo2 = QLabel()
-        # pixmap2 = QPixmap("path/to/logo2.png")  # Update with actual path
-        # logo2.setPixmap(pixmap2)
-        # logo2.setAlignment(Qt.AlignCenter)
+        logo2 = QLabel()
+        pixmap2 = QPixmap("path/to/logo2.png")  # Update with actual path
+        logo2.setPixmap(pixmap2)
+        logo2.setAlignment(Qt.AlignCenter)
 
-        # logo_layout = QHBoxLayout()
-        # logo_layout.addWidget(logo1)
-        # logo_layout.addWidget(logo2)
-        # layout.addLayout(logo_layout)
+        logo_layout = QHBoxLayout()
+        logo_layout.addWidget(logo1)
+        logo_layout.addWidget(logo2)
+        layout.addLayout(logo_layout)
 
         # Trademark/Ownership mark
         trademark_label = QLabel("© Speech Processing Lab (SPL), IIITH. All rights reserved.")
@@ -578,7 +578,7 @@ class MyMainWindow(QMainWindow):
         self.createMoreMenu()
 
         central_widget = QWidget(self)
-        main_layout = QHBoxLayout(central_widget)
+        main_layout = QVBoxLayout(central_widget)
 
         self.splitter = QSplitter(self)
 
@@ -592,6 +592,22 @@ class MyMainWindow(QMainWindow):
         # self.splitter.addWidget(self.right_component)
 
         main_layout.addWidget(self.splitter)
+
+        footer_layout = QHBoxLayout()
+        footer_layout.setAlignment(Qt.AlignCenter)
+
+        trademark_label = QLabel("© Speech Processing Lab (SPL), IIITH. All rights reserved.")
+        trademark_label.setAlignment(Qt.AlignCenter)
+        footer_layout.addWidget(trademark_label)
+
+        logo1 = QLabel()
+        pixmap1 = QPixmap("../icons/iiith-2.png")  # Update with actual path
+        scaled_pixmap = pixmap1.scaled(50, 50, Qt.KeepAspectRatio)
+        logo1.setPixmap(scaled_pixmap)
+        logo1.setAlignment(Qt.AlignCenter)
+        footer_layout.addWidget(logo1)
+
+        main_layout.addLayout(footer_layout)
 
         self.setCentralWidget(central_widget)
 

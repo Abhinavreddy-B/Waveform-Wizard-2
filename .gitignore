@@ -1,2 +1,4 @@
 env-3.12
 target
+**/__pycache__/**
+**/*.pyc
