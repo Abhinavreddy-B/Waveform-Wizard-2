@@ -46,7 +46,7 @@ jobs:
 
     - name: Freeze Application
       run: |
-        ppg freeze
+        ppg freeze --debug
 
     - name: Create Installer
       run: |
@@ -111,7 +111,7 @@ jobs:
         echo "meta_info = { 'version': '${{ github.ref_name }}' }" > version.py
 
     - name: Freeze Application
-      run: ppg freeze
+      run: ppg freeze --debug
 
     - name: Create Installer
       run: |
