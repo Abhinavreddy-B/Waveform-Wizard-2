@@ -42,7 +42,7 @@ jobs:
 
     - name: Save version info
       run: |
-        echo "meta_info = { 'version': '${{ github.ref_name }}' }" > version.py
+        echo "meta_info = { 'version': '${{ github.ref_name }}' }" > src/main/python/version.py
 
     - name: Freeze Application
       run: |
@@ -108,7 +108,7 @@ jobs:
 
     - name: Save version info
       run: |
-        echo "meta_info = { 'version': '${{ github.ref_name }}' }" > version.py
+        echo "meta_info = { 'version': '${{ github.ref_name }}' }" > src/main/python/version.py
 
     - name: Freeze Application
       run: ppg freeze --debug
