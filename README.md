@@ -25,7 +25,7 @@ $ sudo apt install ./Waveform-Wizard_ubuntu-<version>.deb
 
 ## AboutInfoWindow:
 
-- [ ] add version info from from github actions.
+- [x] add version info from from github actions.
 - [ ] IIITH and SPL logos add cheyyacchu
 - [ ] inkemanna details add cheyyacchu
 - [ ] move to components/views
