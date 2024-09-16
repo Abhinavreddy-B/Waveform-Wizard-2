@@ -28,6 +28,8 @@ from panes.pitch_contour import Pane_Contour
 from panes.constantq import Pane_ConstantQ
 from panes.egg import Pane_Egg
 
+from components.draggable_box import DraggableBox
+
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import \
@@ -167,6 +169,11 @@ class AudioComponent(QGroupBox):
         self.canvas_waveform = FigureCanvas(self.plot_waveform)
         self.canvas_waveform.setStyleSheet("background: transparent;")
 
+        self.draggable_box = DraggableBox(self.ax_waveform)
+        self.canvas_waveform.mpl_connect('button_press_event', self.draggable_box.on_press)
+        self.canvas_waveform.mpl_connect('button_release_event', self.draggable_box.on_release)
+        self.canvas_waveform.mpl_connect('motion_notify_event', self.draggable_box.on_motion)
+
         self.action_button_layout_waveform = QHBoxLayout()
         self.zoom_in_action = QAction('Zoom  +')
         self.zoom_in_action.triggered.connect(self.zoom_in)
@@ -195,7 +202,6 @@ class AudioComponent(QGroupBox):
 
     def update_plot(self):
         # self.set_loading_screen_in_plot()
-        self.ax_waveform.clear()
         self.ax_waveform.plot(self.data)
         self.canvas_waveform.draw()
 
