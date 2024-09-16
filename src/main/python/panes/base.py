@@ -1,0 +1,47 @@
+from threading import Thread
+import matplotlib.pyplot as plt
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout)
+from matplotlib.backends.backend_qt5agg import \
+    FigureCanvasQTAgg as FigureCanvas
+
+class Pane_Base(QWidget):
+    def __init__(self, data, fs, resampled_data, resampled_fs):
+        super().__init__()
+        self._data = data
+        self._fs = fs
+        self._resampled_data = resampled_data
+        self._resampled_fs = resampled_fs
+
+        self.__plot = plt.figure(facecolor='none')
+        self._ax = self.__plot.add_subplot(111, facecolor='none')
+        self._ax.set_facecolor('None')
+        self.__plot.tight_layout()
+        self._ax.margins(x=0.1, y=0.1)
+        self.__canvas = FigureCanvas(self.__plot)
+        self.__canvas.setStyleSheet("background: transparent;")
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.__canvas)
+        self.setLayout(layout)
+
+        thread = Thread(target=self.__generate_plot)
+        thread.start()
+
+    def __set_loading_screen_in_plot(self):
+        self._ax.clear()
+        self.__canvas.draw()
+
+        self._ax.set_axis_off()
+        self._ax.text(0.5, 0.5, 'Loading....', horizontalalignment='center', verticalalignment='center', fontsize=12)
+        self.__canvas.draw()
+
+        self._ax.clear()
+    
+    def _generate_plot(self):
+        raise NotImplementedError("Subclasses should implement this!")
+
+    def __generate_plot(self):
+        # Private method, doing some common tasks.
+        self.__set_loading_screen_in_plot()
+        self._generate_plot()
+        self.__canvas.draw()

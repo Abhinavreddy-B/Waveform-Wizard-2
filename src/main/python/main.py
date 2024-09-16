@@ -17,6 +17,17 @@ from dependencies.SINGLE_FREQ_FILTER_FS.main import \
     SINGLE_FREQ_FILTER_FS as single_freq_filter_fs
 from dependencies.voiced_unvoiced_own.main import voiced_unvoiced_own
 from dependencies.ZERO_TIME_WIND_SPECTRUM.main import zero_time_wind_spectrum
+
+from panes.spectrogram import Pane_Spectrogram
+from panes.ztws import Pane_Ztws
+from panes.gammatonegram import Pane_Gammatonegram
+from panes.sff import Pane_Sff
+from panes.formant_peaks import Pane_FormantPeaks
+from panes.vad import Pane_Vad
+from panes.pitch_contour import Pane_Contour
+from panes.constantq import Pane_ConstantQ
+from panes.egg import Pane_Egg
+
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import \
@@ -174,7 +185,6 @@ class AudioComponent(QGroupBox):
         self.other_toolbar = NavigationToolbar(self.canvas_other, self)
         self.layout_area.addWidget(self.other_toolbar)
         self.layout_area.addWidget(self.canvas_other)
-
 
         self.prepareRadioButtons()
 
@@ -515,6 +525,25 @@ class AudioComponent(QGroupBox):
 
         self.update_plot()
         self.enable_radio_buttons()
+
+        spect_pane = Pane_Spectrogram(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        self.layout_area.addWidget(spect_pane)
+        ztws_pane = Pane_Ztws(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        self.layout_area.addWidget(ztws_pane)
+        gammatonegram_pane = Pane_Gammatonegram(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        self.layout_area.addWidget(gammatonegram_pane)
+        sff_pane = Pane_Sff(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        self.layout_area.addWidget(sff_pane)
+        formatPeaks_pane = Pane_FormantPeaks(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        self.layout_area.addWidget(formatPeaks_pane)
+        vad_pane = Pane_Vad(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        self.layout_area.addWidget(vad_pane)
+        contour_pane = Pane_Contour(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        self.layout_area.addWidget(contour_pane)
+        constantq_pane = Pane_ConstantQ(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        self.layout_area.addWidget(constantq_pane)
+        egg_pane = Pane_Egg(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        self.layout_area.addWidget(egg_pane)
 
     def set_second_channel_data(self, data, fs):
         self.second_data = data
