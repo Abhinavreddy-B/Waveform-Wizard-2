@@ -35,7 +35,7 @@ $ sudo apt install ./Waveform-Wizard_ubuntu-<version>.deb
 - [ ] Move file loading and file saving methods into this class instead of mainWindow, (file picker logic kuda indole cheseyyali)
 - [ ] Refactor to accommodate multiple graphs, list of plots instead of single plot_other, ax_other, canvas_other.
 - [ ] removing radio buttons, instead to add new plots, add an option in tool bar option: Pane -> New Pane -> plot name. 
-- [ ] While refactoring, better to have a base class. and all the plots will inherit some common functionality from base class. these  class objects of each plot can be put in components folder.
+- [x] While refactoring, better to have a base class. and all the plots will inherit some common functionality from base class. these  class objects of each plot can be put in components folder.
 - [ ] save file an load file can should be changed to support multiplot
 - [ ] Zoom in, Zoom out, move left, move right of the ax_waveform should change all the other plots to that x range and y range.
 
