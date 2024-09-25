@@ -6,6 +6,7 @@ from dependencies.gammatonegram.main import gammatonegram
 class Pane_Gammatonegram(Pane_Base):
     def __init__(self, data, fs, resampled_data, resampled_fs):
         super().__init__(data, fs, resampled_data, resampled_fs)
+        self._pane_name = 'Gammatonegram'
 
     def _generate_plot(self):
         YG = gammatonegram(self._resampled_data, self._resampled_fs)

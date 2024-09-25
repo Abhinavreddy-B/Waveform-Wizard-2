@@ -1,6 +1,6 @@
 from threading import Thread
 import matplotlib.pyplot as plt
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QMenu, QAction)
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 
@@ -11,6 +11,7 @@ class Pane_Base(QWidget):
         self._fs = fs
         self._resampled_data = resampled_data
         self._resampled_fs = resampled_fs
+        self._pane_name = None # to be overwritten in child.
 
         self.__plot = plt.figure(facecolor='none')
         self._ax = self.__plot.add_subplot(111, facecolor='none')
@@ -26,6 +27,20 @@ class Pane_Base(QWidget):
 
         thread = Thread(target=self.__generate_plot)
         thread.start()
+    
+    def contextMenuEvent(self, event):
+        '''
+        Overwriting default context menu method
+        '''
+        context_menu = QMenu(self)
+
+        action1 = QAction("Delete", self)
+        action1.triggered.connect(self.__delete_pane)
+
+        context_menu.addAction(action1)
+
+        # Show the menu at the cursor's position
+        context_menu.exec_(event.globalPos())
 
     def __set_loading_screen_in_plot(self):
         self._ax.clear()
@@ -45,3 +60,7 @@ class Pane_Base(QWidget):
         self.__set_loading_screen_in_plot()
         self._generate_plot()
         self.__canvas.draw()
+
+    def __delete_pane(self):
+        '''To be implemented'''
+        print('Deleting this pane', self._pane_name)

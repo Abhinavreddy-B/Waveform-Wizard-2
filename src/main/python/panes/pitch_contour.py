@@ -6,6 +6,7 @@ from dependencies.pitch_srh.main import pitch_srh
 class Pane_Contour(Pane_Base):
     def __init__(self, data, fs, resampled_data, resampled_fs):
         super().__init__(data, fs, resampled_data, resampled_fs)
+        self._pane_name = 'Pitch Contour'
 
     def _generate_plot(self):
         f0min = 50

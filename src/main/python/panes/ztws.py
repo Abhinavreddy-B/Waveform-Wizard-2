@@ -6,6 +6,7 @@ from dependencies.ZERO_TIME_WIND_SPECTRUM.main import zero_time_wind_spectrum
 class Pane_Ztws(Pane_Base):
     def __init__(self, data, fs, resampled_data, resampled_fs):
         super().__init__(data, fs, resampled_data, resampled_fs)
+        self._pane_name = 'ZTWS'
 
     def _generate_plot(self):
         _, result_HNGD_SPEC = zero_time_wind_spectrum(self._resampled_data, self._resampled_fs)

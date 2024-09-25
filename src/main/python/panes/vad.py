@@ -6,6 +6,7 @@ from dependencies.voiced_unvoiced_own.main import voiced_unvoiced_own
 class Pane_Vad(Pane_Base):
     def __init__(self, data, fs, resampled_data, resampled_fs):
         super().__init__(data, fs, resampled_data, resampled_fs)
+        self._pane_name = 'VAD'
 
     def _generate_plot(self):
         vuv, _ = voiced_unvoiced_own(self._data, self._fs)
