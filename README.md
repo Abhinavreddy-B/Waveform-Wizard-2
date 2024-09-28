@@ -53,6 +53,23 @@ $ sudo apt install ./Waveform-Wizard_ubuntu-<version>.deb
 1. Wait for the installation to complete and click `next`.
 1. click `Finish`
 
+### (optional) (windows) File browser setup:
+
+1. Right click on any `.wav` file, then click on `Open With` > `Choose another App`. A prompt apprears as follows:
+
+    ![alt](./readme-assets/11.png)
+
+1. Scroll down and Click on `Choose an app on your PC`
+1. A file browser appears, now select `<installation path>/Waveform-Wizard.exe` and click `Open`. 
+
+    > The default installation path is `C:\Program Files (x86)\Waveform-Wizard`. so the path to choose becomes `C:\Program Files (x86)\Waveform-Wizard\Waveform-Wizard.exe`
+
+    ![alt text](./readme-assets/12.png)
+
+1. Now you will be back to application choosing screen, now you can see `Waveform-Wizard` in the list of applications, select it, and click on `Just Once` (or choose `Always` if you want to open all `.wav` using this application).
+
+    ![alt](./readme-assets/13.png)
+
 # TODO:
 
 ## AboutInfoWindow:
