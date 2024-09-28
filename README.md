@@ -70,6 +70,14 @@ $ sudo apt install ./Waveform-Wizard_ubuntu-<version>.deb
 
     ![alt](./readme-assets/13.png)
 
+# Usage
+
+## Windows
+
+### From native file browser:
+1. To use it this way, you need to do this one time setup: [instruction](#optional-windows-file-browser-setup)
+1. after the one time setup, from the subsequent times open any `.wav` file directly by Right clicking, then `Open With` > `Waveform-Wizard`.
+
 # TODO:
 
 ## AboutInfoWindow:
@@ -83,7 +91,8 @@ $ sudo apt install ./Waveform-Wizard_ubuntu-<version>.deb
 
 - [ ] Move file loading and file saving methods into this class instead of mainWindow, (file picker logic kuda indole cheseyyali)
 - [ ] Refactor to accommodate multiple graphs, list of plots instead of single plot_other, ax_other, canvas_other.
-- [ ] removing radio buttons, instead to add new plots, add an option in tool bar option: Pane -> New Pane -> plot name. 
+- [x] removing radio buttons
+- [ ] instead to add new plots, add an option in tool bar option: Pane -> New Pane -> plot name. 
 - [x] While refactoring, better to have a base class. and all the plots will inherit some common functionality from base class. these  class objects of each plot can be put in components folder.
 - [ ] save file an load file can should be changed to support multiplot
 - [ ] Zoom in, Zoom out, move left, move right of the ax_waveform should change all the other plots to that x range and y range.
@@ -109,4 +118,4 @@ Memory optimization:
 
 others:
 
-- [ ] Loading '.wav' files directly, like in windows on clicking any movies, we get 'open with vlc' , etc right. ala emanna. (not sure if this is feasible)
+- [x] Loading '.wav' files directly, like in windows on clicking any movies, we get 'open with vlc' , etc right. ala emanna. (not sure if this is feasible)
