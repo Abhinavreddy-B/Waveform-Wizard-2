@@ -344,7 +344,7 @@ class AudioComponent(QGroupBox):
 
 
 class MyMainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, args):
         super().__init__()
         self.logs = []
         self.file_path = None
@@ -352,6 +352,9 @@ class MyMainWindow(QMainWindow):
         self.file_path_2 = None
         self.file_base_name_2 = None
         self.initUI()
+        
+        if(len(args) > 0):
+            self.__load_file_from_args(args[0])
 
     def initUI(self):
         self.createFileMenu()
@@ -400,7 +403,7 @@ class MyMainWindow(QMainWindow):
         file_menu = self.menuBar().addMenu('File')
 
         load_action = QAction('Load Single File', self)
-        load_action.triggered.connect(self.loadFile)
+        load_action.triggered.connect(self.__invoke_file_picker)
         file_menu.addAction(load_action)
 
         compare_action = QAction('Compare with File', self)
@@ -453,29 +456,38 @@ class MyMainWindow(QMainWindow):
             self.splitter.setOrientation(Qt.Horizontal)
         print('inside, ', text)
 
-    def loadFile(self):
+    def __load_file_from_file_name(self, file_name):
+        if(get_file_extension(file_name) not in ['wav', 'wwc']):
+            show_error_message('File Format unsupported')
+            return
+
+        if(get_file_extension(file_name) in ['wav']):
+            self._log_action(f"Selected file: {file_name}")
+            self.file_path = file_name
+            self.file_base_name = os.path.basename(file_name)
+            self.refresh_left_area()
+
+            data, samplerate = sf.read(self.file_path)
+
+            first_data = process_audio(data)
+            self.left_component.set_data(first_data, samplerate)
+            
+            if has_second_channel(data) == True:
+                second_data = data[:, 1]
+                self.left_component.set_second_channel_data(second_data, samplerate)
+
+    def __load_file_from_args(self, arg_1):
+        cwd = os.getcwd()
+        resolved_path = os.path.abspath(os.path.join(cwd, arg_1))
+        self.__load_file_from_file_name(resolved_path)
+
+    def __invoke_file_picker(self):
         options = QFileDialog.Options()
         fileName, _ = QFileDialog.getOpenFileName(self, "Load Single File", "", "All Files (*);;Text Files (*.txt)", options=options)
         if fileName:
-            if(get_file_extension(fileName) not in ['wav', 'wwc']):
-                show_error_message('File Format unsupported')
-                return
-
             if self.file_path == None:
                 if(get_file_extension(fileName) in ['wav']):
-                    self._log_action(f"Selected file: {fileName}")
-                    self.file_path = fileName
-                    self.file_base_name = os.path.basename(fileName)
-                    self.refresh_left_area()
-
-                    data, samplerate = sf.read(self.file_path)
-
-                    first_data = process_audio(data)
-                    self.left_component.set_data(first_data, samplerate)
-                    
-                    if has_second_channel(data) == True:
-                        second_data = data[:, 1]
-                        self.left_component.set_second_channel_data(second_data, samplerate)
+                    self.__load_file_from_file_name(fileName)
                 else:
                     self.left_component.load_file(fileName)
             else:
@@ -535,7 +547,7 @@ class MyMainWindow(QMainWindow):
 
 if __name__ == '__main__':
     appctxt = ApplicationContext()
-    mainWindow = MyMainWindow()
+    mainWindow = MyMainWindow(args=sys.argv[1:])
     mainWindow.show()
     # This fixes the issue with PySide2 that the exec function is not found
     exec_func = getattr(appctxt.app, 'exec', appctxt.app.exec_)
