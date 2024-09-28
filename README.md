@@ -85,12 +85,11 @@ $ sudo apt install ./Waveform-Wizard_ubuntu-<version>.deb
 - [x] add version info from from github actions.
 - [ ] IIITH and SPL logos add cheyyacchu
 - [ ] inkemanna details add cheyyacchu
-- [ ] move to components/views
 
 ## AudioComponent:
 
-- [ ] Move file loading and file saving methods into this class instead of mainWindow, (file picker logic kuda indole cheseyyali)
-- [ ] Refactor to accommodate multiple graphs, list of plots instead of single plot_other, ax_other, canvas_other.
+- [ ] Move file loading and file saving methods into this class instead of mainWindow. (ig, not sure)
+- [x] Refactor to accommodate multiple graphs, list of plots instead of single plot_other, ax_other, canvas_other.
 - [x] removing radio buttons
 - [ ] instead to add new plots, add an option in tool bar option: Pane -> New Pane -> plot name. 
 - [x] While refactoring, better to have a base class. and all the plots will inherit some common functionality from base class. these  class objects of each plot can be put in components folder.
@@ -100,7 +99,7 @@ $ sudo apt install ./Waveform-Wizard_ubuntu-<version>.deb
 
 ## MyMainWindow:
 
-- [ ] rename the class to a better name
+- [x] rename the class to a better name
 - [ ] Keep only 1 file per main window
 - [ ] If a user tries to load another file, or wants to use 2 files at a time, just initialise another window(another application instance)
 - [ ] accordingly remove the splitter (no longer required since we dont compare 2 files at a time)

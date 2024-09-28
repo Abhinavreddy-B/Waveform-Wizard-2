@@ -355,8 +355,7 @@ class AudioComponent(QGroupBox):
 
         self.update_in_background(fn, callbk)()
 
-
-class MyMainWindow(QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self, args):
         super().__init__()
         self.logs = []
