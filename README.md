@@ -38,6 +38,7 @@ $ sudo apt install ./Waveform-Wizard_ubuntu-<version>.deb
 - [x] While refactoring, better to have a base class. and all the plots will inherit some common functionality from base class. these  class objects of each plot can be put in components folder.
 - [ ] save file an load file can should be changed to support multiplot
 - [ ] Zoom in, Zoom out, move left, move right of the ax_waveform should change all the other plots to that x range and y range.
+- [x] delete pane functionality
 
 ## MyMainWindow:
 
@@ -47,7 +48,8 @@ $ sudo apt install ./Waveform-Wizard_ubuntu-<version>.deb
 - [ ] accordingly remove the splitter (no longer required since we dont compare 2 files at a time)
 - [ ] Remove orientation menu
 - [ ] Add/ remove new options in File menu
-- [ ] add Pane menu, with options to create new pane, delete pane, etc
+- [ ] add Pane menu, with options to create new pane
+- [x] delete pane context menu
 - [ ] can add export menu either as a seperate menu or inside File menu
 
 ## Misc features:
