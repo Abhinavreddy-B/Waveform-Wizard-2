@@ -5,13 +5,14 @@ from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 
 class Pane_Base(QWidget):
-    def __init__(self, data, fs, resampled_data, resampled_fs):
+    def __init__(self, data, fs, resampled_data, resampled_fs, delete_callback):
         super().__init__()
         self._data = data
         self._fs = fs
         self._resampled_data = resampled_data
         self._resampled_fs = resampled_fs
         self._pane_name = None # to be overwritten in child.
+        self.__delete_callback = delete_callback
 
         self.__plot = plt.figure(facecolor='none')
         self._ax = self.__plot.add_subplot(111, facecolor='none')
@@ -63,4 +64,5 @@ class Pane_Base(QWidget):
 
     def __delete_pane(self):
         '''To be implemented'''
+        self.__delete_callback(self)
         print('Deleting this pane', self._pane_name)

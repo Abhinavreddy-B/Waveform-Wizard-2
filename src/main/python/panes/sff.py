@@ -5,8 +5,8 @@ from dependencies.SINGLE_FREQ_FILTER_FS.main import \
     SINGLE_FREQ_FILTER_FS as single_freq_filter_fs
 
 class Pane_Sff(Pane_Base):
-    def __init__(self, data, fs, resampled_data, resampled_fs):
-        super().__init__(data, fs, resampled_data, resampled_fs)
+    def __init__(self, *args):
+        super().__init__(*args)
         self._pane_name = 'SFF'
 
     def _generate_plot(self):

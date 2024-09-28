@@ -6,8 +6,8 @@ from dependencies.pitch_srh.main import pitch_srh
 from dependencies.formant_CGDZP.main import formant_CGDZP
 
 class Pane_FormantPeaks(Pane_Base):
-    def __init__(self, data, fs, resampled_data, resampled_fs):
-        super().__init__(data, fs, resampled_data, resampled_fs)
+    def __init__(self, *args):
+        super().__init__(*args)
         self._pane_name = 'Formant Peaks'
 
     def _generate_plot(self):

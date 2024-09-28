@@ -18,15 +18,8 @@ from dependencies.SINGLE_FREQ_FILTER_FS.main import \
 from dependencies.voiced_unvoiced_own.main import voiced_unvoiced_own
 from dependencies.ZERO_TIME_WIND_SPECTRUM.main import zero_time_wind_spectrum
 
-from panes.spectrogram import Pane_Spectrogram
-from panes.ztws import Pane_Ztws
-from panes.gammatonegram import Pane_Gammatonegram
-from panes.sff import Pane_Sff
-from panes.formant_peaks import Pane_FormantPeaks
-from panes.vad import Pane_Vad
-from panes.pitch_contour import Pane_Contour
-from panes.constantq import Pane_ConstantQ
-from panes.egg import Pane_Egg
+from panes.factory import Pane_Factory
+from panes.base import Pane_Base
 
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
@@ -210,24 +203,44 @@ class AudioComponent(QGroupBox):
         self.add_waveform_plot_area()
         self.update_plot()
 
-        spect_pane = Pane_Spectrogram(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(spect_pane)
-        ztws_pane = Pane_Ztws(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(ztws_pane)
-        gammatonegram_pane = Pane_Gammatonegram(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(gammatonegram_pane)
-        sff_pane = Pane_Sff(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(sff_pane)
-        formatPeaks_pane = Pane_FormantPeaks(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(formatPeaks_pane)
-        vad_pane = Pane_Vad(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(vad_pane)
-        contour_pane = Pane_Contour(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(contour_pane)
-        constantq_pane = Pane_ConstantQ(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(constantq_pane)
-        egg_pane = Pane_Egg(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(egg_pane)
+        # spect_pane = Pane_Factory.get_pane_class_by_name('Spectrogram')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(spect_pane)
+        # ztws_pane = Pane_Factory.get_pane_class_by_name('ZTWS')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(ztws_pane)
+        # gammatonegram_pane = Pane_Factory.get_pane_class_by_name('Gammatonegram')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(gammatonegram_pane)
+        # sff_pane = Pane_Factory.get_pane_class_by_name('SFF')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(sff_pane)
+        # formatPeaks_pane = Pane_Factory.get_pane_class_by_name('Formant Peaks')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(formatPeaks_pane)
+        # vad_pane = Pane_Factory.get_pane_class_by_name('VAD')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(vad_pane)
+        # contour_pane = Pane_Factory.get_pane_class_by_name('Pitch Contour')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(contour_pane)
+        # constantq_pane = Pane_Factory.get_pane_class_by_name('Constant-Q')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(constantq_pane)
+        # egg_pane = Pane_Factory.get_pane_class_by_name('EGG')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(egg_pane)
+
+        self.__add_pane('Spectrogram')
+        self.__add_pane('ZTWS')
+        self.__add_pane('Gammatonegram')
+        self.__add_pane('SFF')
+        self.__add_pane('Formant Peaks')
+        self.__add_pane('VAD')
+        self.__add_pane('Pitch Contour')
+        self.__add_pane('Constant-Q')
+        self.__add_pane('EGG')
+
+    def __add_pane(self, pane_name):
+        pane_class = Pane_Factory.get_pane_class_by_name(pane_name)
+        pane = pane_class(self.data, self.fs, self.resampled_data, self.resampled_fs, self.__delete_pane)
+        self.layout_area.addWidget(pane)
+
+    def __delete_pane(self, widget_object: QWidget):
+        self.layout_area.removeWidget(widget_object)
+        self.layout_area.update()
+        widget_object.deleteLater()
 
     def set_second_channel_data(self, data, fs):
         self.second_data = data
