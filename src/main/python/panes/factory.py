@@ -1,5 +1,6 @@
 from panes.base import Pane_Base
 
+from panes.waveform import Pane_Waveform
 from panes.spectrogram import Pane_Spectrogram
 from panes.ztws import Pane_Ztws
 from panes.gammatonegram import Pane_Gammatonegram
@@ -12,6 +13,7 @@ from panes.egg import Pane_Egg
 
 class Pane_Factory():
     name_to_pane_map = {
+        'Waveform': Pane_Waveform,
         'Spectrogram': Pane_Spectrogram,
         'ZTWS': Pane_Ztws,
         'Gammatonegram': Pane_Gammatonegram,

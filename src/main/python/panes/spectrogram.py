@@ -13,7 +13,7 @@ class Pane_Spectrogram(Pane_Base):
         
         t = t/max(t)
         t = t * len(self._data)/self._fs
-        print('DEBUG:', t, len(t))
+        # print('DEBUG:', t, len(t))
         self._ax.pcolormesh(t, f, 10 * np.log10(Sxx))
         self._ax.set_ylabel('Frequency [Hz]')
         self._ax.set_xlabel('Time [sec]')

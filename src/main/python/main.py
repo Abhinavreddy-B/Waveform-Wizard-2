@@ -225,6 +225,7 @@ class AudioComponent(QGroupBox):
         # egg_pane = Pane_Factory.get_pane_class_by_name('EGG')(self.data, self.fs, self.resampled_data, self.resampled_fs)
         # self.layout_area.addWidget(egg_pane)
 
+        self.__add_pane('Waveform')
         self.__add_pane('Spectrogram')
         self.__add_pane('ZTWS')
         self.__add_pane('Gammatonegram')
