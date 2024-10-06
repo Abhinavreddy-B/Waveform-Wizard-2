@@ -3,6 +3,7 @@ import sys
 import threading
 from datetime import datetime
 from time import sleep
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -162,7 +163,7 @@ class AudioComponent(QGroupBox):
         self.canvas_waveform = FigureCanvas(self.plot_waveform)
         self.canvas_waveform.setStyleSheet("background: transparent;")
 
-        self.draggable_box = DraggableBox(self.ax_waveform)
+        self.draggable_box = DraggableBox(self.ax_waveform, self.__update_plot_x_lims, self._time)
         self.canvas_waveform.mpl_connect('button_press_event', self.draggable_box.on_press)
         self.canvas_waveform.mpl_connect('button_release_event', self.draggable_box.on_release)
         self.canvas_waveform.mpl_connect('motion_notify_event', self.draggable_box.on_motion)
@@ -176,18 +177,8 @@ class AudioComponent(QGroupBox):
         self.zoom_out_action.triggered.connect(self.zoom_out)
         self.tool_button_zoom_out = QToolButton(self)
         self.tool_button_zoom_out.setDefaultAction(self.zoom_out_action)
-        self.move_right_action = QAction('\u2192')
-        self.move_right_action.triggered.connect(self.move_right)
-        self.tool_button_move_right = QToolButton(self)
-        self.tool_button_move_right.setDefaultAction(self.move_right_action)
-        self.move_left_action = QAction('\u2190')
-        self.move_left_action.triggered.connect(self.move_left)
-        self.tool_button_move_left = QToolButton(self)
-        self.tool_button_move_left.setDefaultAction(self.move_left_action)
-        self.action_button_layout_waveform.addWidget(self.tool_button_move_left)
         self.action_button_layout_waveform.addWidget(self.tool_button_zoom_in)
         self.action_button_layout_waveform.addWidget(self.tool_button_zoom_out)
-        self.action_button_layout_waveform.addWidget(self.tool_button_move_right)
         self.action_button_layout_waveform.addStretch()
         
         self.layout_area.addLayout(self.action_button_layout_waveform)
@@ -195,7 +186,11 @@ class AudioComponent(QGroupBox):
 
     def update_plot(self):
         # self.set_loading_screen_in_plot()
-        self.ax_waveform.plot(self.data)
+        # self.ax_waveform.clear()
+        time = len(self.data)/self.fs
+
+        x = np.linspace(0, time, len(self.data))
+        self.ax_waveform.plot(x, self.data)
         self.canvas_waveform.draw()
 
     def set_data(self, data, fs):
@@ -205,7 +200,9 @@ class AudioComponent(QGroupBox):
 
         self.resampled_data = resample(self.data, 4000, self.fs)
         self.resampled_fs = 4000
-
+        
+        self._time = len(self.data)/self.fs
+        
         self.add_waveform_plot_area()
         self.update_plot()
 
@@ -248,44 +245,53 @@ class AudioComponent(QGroupBox):
         self.layout_area.update()
         widget_object.deleteLater()
 
+    def __get_pane_list(self) -> List[Pane_Base]:
+        widget_list = []
+        for i in range(self.layout_area.count()):
+            widget = self.layout_area.itemAt(i).widget()
+            if isinstance(widget, Pane_Base):
+                widget_list.append(widget)
+        return widget_list
+    
+    def __update_plot_x_lims(self, x_left, x_right):
+        panes = self.__get_pane_list()
+        print(panes)
+        for pane in panes:
+            pane.update_graph_x_lims(x_left, x_right)
+
     def set_second_channel_data(self, data, fs):
         self.second_data = data
         self.second_fs = fs
         self.second_channel_available = True
 
     def zoom_in(self):
-        xlim = self.ax_waveform.get_xlim()
+        xlim = self.draggable_box.get_x_lims()
         # ylim = self.ax.get_ylim()
         center = (xlim[0] + xlim[1])/2
-        self.ax_waveform.set_xlim(center - (center - xlim[0]) * 0.9, center + (xlim[1] - center) * 0.9)
+
+        x_left = center - (center - xlim[0]) * 0.9
+        x_right = center + (xlim[1] - center) * 0.9
+        self.draggable_box.set_x_lims(x_left, x_right)
         # self.ax.set_ylim(ylim[0] * 0.9, ylim[1] * 0.9)
         self.canvas_waveform.draw()
 
+        self.__update_plot_x_lims(x_left, x_right)
+
     def zoom_out(self):
-        xlim = self.ax_waveform.get_xlim()
+        xlim = self.draggable_box.get_x_lims()
         # ylim = self.ax.get_ylim()
         center = (xlim[0] + xlim[1])/2
-        self.ax_waveform.set_xlim(center - (center - xlim[0]) * 1.1, center + (xlim[1] - center) * 1.1)
+
+        x_left = center - (center - xlim[0]) * 1.1
+        x_left = max(0, x_left)
+        x_right = center + (xlim[1] - center) * 1.1
+        x_right = min(self._time, x_right)
+
+        self.draggable_box.set_x_lims(x_left, x_right)
         # self.ax.set_ylim(ylim[0] * 1.1, ylim[1] * 1.1)
         self.canvas_waveform.draw()
 
-    def move_right(self):
-        xlim = self.ax_waveform.get_xlim()
-        # ylim = self.ax.get_ylim()
-        width = (xlim[1] - xlim[0])
-        shift = width * 0.1
-        self.ax_waveform.set_xlim(xlim[0]+shift, xlim[1]+shift)
-        # self.ax.set_ylim(ylim[0] * 0.9, ylim[1] * 0.9)
-        self.canvas_waveform.draw()
-    
-    def move_left(self):
-        xlim = self.ax_waveform.get_xlim()
-        # ylim = self.ax.get_ylim()
-        width = (xlim[1] - xlim[0])
-        shift = width * 0.1
-        self.ax_waveform.set_xlim(xlim[0]-shift, xlim[1]-shift)
-        # self.ax.set_ylim(ylim[0] * 0.9, ylim[1] * 0.9)
-        self.canvas_waveform.draw()
+        self.__update_plot_x_lims(x_left, x_right)
 
     def get_active_radio_button(self):
         radioButtons = [
@@ -565,7 +571,7 @@ class MainWindow(QMainWindow):
 
 if __name__ == '__main__':
     appctxt = ApplicationContext()
-    mainWindow = MyMainWindow(args=sys.argv[1:])
+    mainWindow = MainWindow(args=sys.argv[1:])
     mainWindow.show()
     # This fixes the issue with PySide2 that the exec function is not found
     exec_func = getattr(appctxt.app, 'exec', appctxt.app.exec_)

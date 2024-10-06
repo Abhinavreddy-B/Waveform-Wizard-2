@@ -83,7 +83,7 @@ def zero_time_wind_spectrum(wav, fs, N=512, M=1):
     # if len(hdwindow1) != x.shape[0]:
     #     hdwindow1 = np.concatenate((hdwindow1, np.zeros(x.shape[0] - len(hdwindow1))))
     
-    print(hdwindow1, hdwindow1[:, np.newaxis].shape, np.ones((1, x.shape[0])).shape)
+    # print(hdwindow1, hdwindow1[:, np.newaxis].shape, np.ones((1, x.shape[0])).shape)
     # Reshape hd_wind to match 'x'
     hd_wind = (np.dot(hdwindow1[:, np.newaxis], np.ones((1, x.shape[0])))).T
     

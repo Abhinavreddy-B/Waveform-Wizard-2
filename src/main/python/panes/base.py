@@ -11,8 +11,10 @@ class Pane_Base(QWidget):
         self._fs = fs
         self._resampled_data = resampled_data
         self._resampled_fs = resampled_fs
-        self._pane_name = None # to be overwritten in child.
+        self._total_time = len(self._data)
         self.__delete_callback = delete_callback
+
+        self._pane_name = None # to be overwritten in child.
 
         self.__plot = plt.figure(facecolor='none')
         self._ax = self.__plot.add_subplot(111, facecolor='none')
@@ -42,6 +44,12 @@ class Pane_Base(QWidget):
 
         # Show the menu at the cursor's position
         context_menu.exec_(event.globalPos())
+
+    def update_graph_x_lims(self, x_left, x_right):
+        print('Updating inside', self._pane_name, x_left, x_right)
+        print('Current limits', self._ax.get_xlim())
+        self._ax.set_xlim((x_left, x_right))
+        self.__canvas.draw()
 
     def __set_loading_screen_in_plot(self):
         self._ax.clear()
