@@ -18,15 +18,8 @@ from dependencies.SINGLE_FREQ_FILTER_FS.main import \
 from dependencies.voiced_unvoiced_own.main import voiced_unvoiced_own
 from dependencies.ZERO_TIME_WIND_SPECTRUM.main import zero_time_wind_spectrum
 
-from panes.spectrogram import Pane_Spectrogram
-from panes.ztws import Pane_Ztws
-from panes.gammatonegram import Pane_Gammatonegram
-from panes.sff import Pane_Sff
-from panes.formant_peaks import Pane_FormantPeaks
-from panes.vad import Pane_Vad
-from panes.pitch_contour import Pane_Contour
-from panes.constantq import Pane_ConstantQ
-from panes.egg import Pane_Egg
+from panes.factory import Pane_Factory
+from panes.base import Pane_Base
 
 from components.draggable_box import DraggableBox
 
@@ -216,24 +209,44 @@ class AudioComponent(QGroupBox):
         self.add_waveform_plot_area()
         self.update_plot()
 
-        spect_pane = Pane_Spectrogram(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(spect_pane)
-        ztws_pane = Pane_Ztws(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(ztws_pane)
-        gammatonegram_pane = Pane_Gammatonegram(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(gammatonegram_pane)
-        sff_pane = Pane_Sff(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(sff_pane)
-        formatPeaks_pane = Pane_FormantPeaks(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(formatPeaks_pane)
-        vad_pane = Pane_Vad(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(vad_pane)
-        contour_pane = Pane_Contour(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(contour_pane)
-        constantq_pane = Pane_ConstantQ(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(constantq_pane)
-        egg_pane = Pane_Egg(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        self.layout_area.addWidget(egg_pane)
+        # spect_pane = Pane_Factory.get_pane_class_by_name('Spectrogram')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(spect_pane)
+        # ztws_pane = Pane_Factory.get_pane_class_by_name('ZTWS')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(ztws_pane)
+        # gammatonegram_pane = Pane_Factory.get_pane_class_by_name('Gammatonegram')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(gammatonegram_pane)
+        # sff_pane = Pane_Factory.get_pane_class_by_name('SFF')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(sff_pane)
+        # formatPeaks_pane = Pane_Factory.get_pane_class_by_name('Formant Peaks')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(formatPeaks_pane)
+        # vad_pane = Pane_Factory.get_pane_class_by_name('VAD')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(vad_pane)
+        # contour_pane = Pane_Factory.get_pane_class_by_name('Pitch Contour')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(contour_pane)
+        # constantq_pane = Pane_Factory.get_pane_class_by_name('Constant-Q')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(constantq_pane)
+        # egg_pane = Pane_Factory.get_pane_class_by_name('EGG')(self.data, self.fs, self.resampled_data, self.resampled_fs)
+        # self.layout_area.addWidget(egg_pane)
+
+        self.__add_pane('Spectrogram')
+        self.__add_pane('ZTWS')
+        self.__add_pane('Gammatonegram')
+        self.__add_pane('SFF')
+        self.__add_pane('Formant Peaks')
+        self.__add_pane('VAD')
+        self.__add_pane('Pitch Contour')
+        self.__add_pane('Constant-Q')
+        self.__add_pane('EGG')
+
+    def __add_pane(self, pane_name):
+        pane_class = Pane_Factory.get_pane_class_by_name(pane_name)
+        pane = pane_class(self.data, self.fs, self.resampled_data, self.resampled_fs, self.__delete_pane)
+        self.layout_area.addWidget(pane)
+
+    def __delete_pane(self, widget_object: QWidget):
+        self.layout_area.removeWidget(widget_object)
+        self.layout_area.update()
+        widget_object.deleteLater()
 
     def set_second_channel_data(self, data, fs):
         self.second_data = data
@@ -348,9 +361,8 @@ class AudioComponent(QGroupBox):
 
         self.update_in_background(fn, callbk)()
 
-
-class MyMainWindow(QMainWindow):
-    def __init__(self):
+class MainWindow(QMainWindow):
+    def __init__(self, args):
         super().__init__()
         self.logs = []
         self.file_path = None
@@ -358,6 +370,9 @@ class MyMainWindow(QMainWindow):
         self.file_path_2 = None
         self.file_base_name_2 = None
         self.initUI()
+        
+        if(len(args) > 0):
+            self.__load_file_from_args(args[0])
 
     def initUI(self):
         self.createFileMenu()
@@ -406,7 +421,7 @@ class MyMainWindow(QMainWindow):
         file_menu = self.menuBar().addMenu('File')
 
         load_action = QAction('Load Single File', self)
-        load_action.triggered.connect(self.loadFile)
+        load_action.triggered.connect(self.__invoke_file_picker)
         file_menu.addAction(load_action)
 
         compare_action = QAction('Compare with File', self)
@@ -459,29 +474,38 @@ class MyMainWindow(QMainWindow):
             self.splitter.setOrientation(Qt.Horizontal)
         print('inside, ', text)
 
-    def loadFile(self):
+    def __load_file_from_file_name(self, file_name):
+        if(get_file_extension(file_name) not in ['wav', 'wwc']):
+            show_error_message('File Format unsupported')
+            return
+
+        if(get_file_extension(file_name) in ['wav']):
+            self._log_action(f"Selected file: {file_name}")
+            self.file_path = file_name
+            self.file_base_name = os.path.basename(file_name)
+            self.refresh_left_area()
+
+            data, samplerate = sf.read(self.file_path)
+
+            first_data = process_audio(data)
+            self.left_component.set_data(first_data, samplerate)
+            
+            if has_second_channel(data) == True:
+                second_data = data[:, 1]
+                self.left_component.set_second_channel_data(second_data, samplerate)
+
+    def __load_file_from_args(self, arg_1):
+        cwd = os.getcwd()
+        resolved_path = os.path.abspath(os.path.join(cwd, arg_1))
+        self.__load_file_from_file_name(resolved_path)
+
+    def __invoke_file_picker(self):
         options = QFileDialog.Options()
         fileName, _ = QFileDialog.getOpenFileName(self, "Load Single File", "", "All Files (*);;Text Files (*.txt)", options=options)
         if fileName:
-            if(get_file_extension(fileName) not in ['wav', 'wwc']):
-                show_error_message('File Format unsupported')
-                return
-
             if self.file_path == None:
                 if(get_file_extension(fileName) in ['wav']):
-                    self._log_action(f"Selected file: {fileName}")
-                    self.file_path = fileName
-                    self.file_base_name = os.path.basename(fileName)
-                    self.refresh_left_area()
-
-                    data, samplerate = sf.read(self.file_path)
-
-                    first_data = process_audio(data)
-                    self.left_component.set_data(first_data, samplerate)
-                    
-                    if has_second_channel(data) == True:
-                        second_data = data[:, 1]
-                        self.left_component.set_second_channel_data(second_data, samplerate)
+                    self.__load_file_from_file_name(fileName)
                 else:
                     self.left_component.load_file(fileName)
             else:
@@ -541,7 +565,7 @@ class MyMainWindow(QMainWindow):
 
 if __name__ == '__main__':
     appctxt = ApplicationContext()
-    mainWindow = MyMainWindow()
+    mainWindow = MyMainWindow(args=sys.argv[1:])
     mainWindow.show()
     # This fixes the issue with PySide2 that the exec function is not found
     exec_func = getattr(appctxt.app, 'exec', appctxt.app.exec_)

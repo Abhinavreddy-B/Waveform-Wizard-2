@@ -46,7 +46,7 @@ jobs:
 
     - name: Freeze Application
       run: |
-        ppg freeze --debug
+        ppg freeze
 
     - name: Create Installer
       run: |
@@ -92,14 +92,6 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.12'
-        
-    - name: Set up Ruby
-      uses: actions/setup-ruby@v1
-      with:
-        ruby-version: '3.0'
-
-    - name: Install FPM (for installer)
-      run: gem install fpm
       
     - name: Install dependencies
       run: |
@@ -111,7 +103,7 @@ jobs:
         echo "meta_info = { 'version': '${{ github.ref_name }}' }" > src/main/python/version.py
 
     - name: Freeze Application
-      run: ppg freeze --debug
+      run: ppg freeze
 
     - name: Create Installer
       run: |

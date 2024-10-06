@@ -3,8 +3,9 @@ import numpy as np
 from panes.base import Pane_Base
 
 class Pane_Egg(Pane_Base):
-    def __init__(self, data, fs, resampled_data, resampled_fs):
-        super().__init__(data, fs, resampled_data, resampled_fs)
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._pane_name = 'EGG'
 
     def _generate_plot(self):
         self._ax.set_axis_off()
