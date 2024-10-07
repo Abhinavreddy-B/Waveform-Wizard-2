@@ -5,7 +5,7 @@ from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
 
 class Pane_Base(QWidget):
-    def __init__(self, data, fs, resampled_data, resampled_fs, delete_callback):
+    def __init__(self, data, fs, resampled_data, resampled_fs, delete_callback, x_left, x_right):
         super().__init__()
         self._data = data
         self._fs = fs
@@ -13,6 +13,8 @@ class Pane_Base(QWidget):
         self._resampled_fs = resampled_fs
         self._total_time = len(self._data)
         self.__delete_callback = delete_callback
+        self.__init_x_left = x_left
+        self.__init_x_right = x_right
 
         self._pane_name = None # to be overwritten in child.
 
@@ -68,6 +70,7 @@ class Pane_Base(QWidget):
         # Private method, doing some common tasks.
         self.__set_loading_screen_in_plot()
         self._generate_plot()
+        self.update_graph_x_lims(x_left=self.__init_x_left, x_right=self.__init_x_right)
         self.__canvas.draw()
 
     def __delete_pane(self):

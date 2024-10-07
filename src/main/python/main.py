@@ -23,6 +23,7 @@ from panes.factory import Pane_Factory
 from panes.base import Pane_Base
 
 from components.draggable_box import DraggableBox
+import utils
 
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
@@ -36,7 +37,8 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QAction, QActionGroup, QApplication, QFileDialog,
                              QGroupBox, QHBoxLayout, QLabel, QMainWindow,
                              QMenu, QMessageBox, QRadioButton, QSplitter,
-                             QTextEdit, QToolButton, QVBoxLayout, QWidget, QDialog, QPushButton)
+                             QTextEdit, QToolButton, QVBoxLayout, QWidget,
+                             QLineEdit, QDialog, QPushButton)
 from scipy.signal import spectrogram
 
 from version import meta_info
@@ -234,11 +236,13 @@ class AudioComponent(QGroupBox):
         self.__add_pane('VAD')
         self.__add_pane('Pitch Contour')
         self.__add_pane('Constant-Q')
-        self.__add_pane('EGG')
+        # self.__add_pane('EGG')
 
     def __add_pane(self, pane_name):
         pane_class = Pane_Factory.get_pane_class_by_name(pane_name)
-        pane = pane_class(self.data, self.fs, self.resampled_data, self.resampled_fs, self.__delete_pane)
+        x_left, x_right = self.draggable_box.get_x_lims()
+        pane = pane_class(self.data, self.fs, self.resampled_data, self.resampled_fs, self.__delete_pane, x_left, x_right)
+        pane.update_graph_x_lims(x_left, x_right)
         self.layout_area.addWidget(pane)
 
     def __delete_pane(self, widget_object: QWidget):
@@ -312,6 +316,17 @@ class AudioComponent(QGroupBox):
                 return button.text()  # Returns the text of the checked radio button
         return None
 
+    def export(self):
+        axes = []
+        axes.append(self.ax_waveform)
+
+        panes = self.__get_pane_list()
+        for pane in panes:
+            axes.append(pane._ax)
+        
+        self.__print_window = PrintWindow(axes)
+        self.__print_window.show()
+        
     def save_file(self, file_path):
         config = {
             'data': self.data,
@@ -367,6 +382,81 @@ class AudioComponent(QGroupBox):
             self.canvas_other.draw()
 
         self.update_in_background(fn, callbk)()
+
+class PrintWindow(QWidget):
+    def __init__(self, axes):
+        super().__init__()
+        self.setWindowTitle("Export")
+        self.showMaximized()
+
+        self.__original_axes = axes
+        self.__n_axes = len(self.__original_axes)
+
+        # Create a matplotlib figure and canvas
+        self.__figure, self.__axes = plt.subplots(self.__n_axes, 1)
+        self.__figure.set_constrained_layout(True)
+        self.__canvas = FigureCanvas(self.__figure)
+
+        for (old_ax, new_ax) in zip(self.__original_axes, self.__axes):
+            utils.copy_axes(old_ax, new_ax)
+            # new_ax.set_xticks([])  # Remove x-ticks
+            # new_ax.set_xlabel('')  # Remove x-axis title
+            # new_ax.set_ylabel(new_ax.get_ylabel(), rotation=0)
+
+        self.__preview_layout = QVBoxLayout()
+        self.__preview_layout.addWidget(self.__canvas)
+        self.__preview_box = QGroupBox('Preview')
+        self.__preview_box.setLayout(self.__preview_layout)
+        
+        self.__title_input_layout = QVBoxLayout()
+
+        self.__suptitle = QLineEdit(self)
+        self.__suptitle.setPlaceholderText('Title...')
+        self.__title_input_layout.addWidget(self.__suptitle)
+
+        self.__ax_titles = []
+        for index, _ in enumerate(self.__axes):
+            ax_title = QLineEdit(self)
+            ax_title.setPlaceholderText(f'Graph {index}')
+            self.__title_input_layout.addWidget(ax_title)
+            self.__ax_titles.append(ax_title)
+
+        self.__preview_button = QPushButton('Preview', self)
+        self.__preview_button.clicked.connect(self.__update_title)
+        self.__title_input_layout.addWidget(self.__preview_button)
+
+        self.__title_input_layout
+        self.__title_input_box = QGroupBox('Titles')
+        self.__title_input_box.setLayout(self.__title_input_layout)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.__preview_box, 5)
+        layout.addWidget(self.__title_input_box, 1)
+
+        # layout.
+        self.setLayout(layout)
+
+    def __on_text_change(self):
+        # Every time the text changes, reset and restart the timer
+        self.timer.start(1000)
+
+    def __update_title(self):
+        suptitle = self.__suptitle.text()
+        ax_titles_text = []
+        for ax_title in self.__ax_titles:
+            text = ax_title.text()
+            ax_titles_text.append(text)
+        
+        def __background():
+            self.__figure.suptitle(suptitle)
+            for ax, ax_title_box in zip(self.__axes, self.__ax_titles):
+                title = ax_title_box.text()
+                ax.set_title(title)
+
+            self.__canvas.draw()
+        
+        thread = threading.Thread(None, __background)
+        thread.start()
 
 class MainWindow(QMainWindow):
     def __init__(self, args):
@@ -431,6 +521,10 @@ class MainWindow(QMainWindow):
         load_action.triggered.connect(self.__invoke_file_picker)
         file_menu.addAction(load_action)
 
+        export_action = QAction('Export', self)
+        export_action.triggered.connect(self.__invoke_export)
+        file_menu.addAction(export_action)
+
         compare_action = QAction('Compare with File', self)
         compare_action.triggered.connect(self.compareFiles)
         file_menu.addAction(compare_action)
@@ -480,6 +574,9 @@ class MainWindow(QMainWindow):
         else:
             self.splitter.setOrientation(Qt.Horizontal)
         print('inside, ', text)
+
+    def __invoke_export(self):
+        self.left_component.export()
 
     def __load_file_from_file_name(self, file_name):
         if(get_file_extension(file_name) not in ['wav', 'wwc']):

@@ -43,7 +43,8 @@ class Pane_FormantPeaks(Pane_Base):
         tf0 = np.arange(len(F0s)) * 0.01
         self._ax.plot(tf0, F0s, 'r*', markersize=3)
 
-        self._ax.plot(t_analysis[:len(VUVDecisions)], F1, 'yx', linewidth=3, markersize=6)
+        debug = self._ax.plot(t_analysis[:len(VUVDecisions)], F1, 'yx', linewidth=3, markersize=6)
+        # print(debug, debug[0].get_marker(), debug[0].get_markerfacecolor())
         self._ax.plot(t_analysis[:len(VUVDecisions)], F2, 'rx', linewidth=3, markersize=6)
         self._ax.plot(t_analysis[:len(VUVDecisions)], F3, 'gx', linewidth=3, markersize=6)
 
