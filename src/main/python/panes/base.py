@@ -77,3 +77,6 @@ class Pane_Base(QWidget):
         '''To be implemented'''
         self.__delete_callback(self)
         print('Deleting this pane', self._pane_name)
+        
+    def get_pane_name(self):
+        return self._pane_name
