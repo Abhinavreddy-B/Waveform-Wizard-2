@@ -330,10 +330,10 @@ class AudioComponent(QGroupBox):
         self.draggable_box.set_x_lims(x_left, x_right)
 
         # self.ax_waveform.set_xlim(config['plot_config']['x_start'], config['plot_config']['x_end'])
-        self.ax_waveform.set_ylim(config['plot_config']['y_start'], config['plot_config']['y_end'])
-        self.canvas_waveform.draw()
+        # self.ax_waveform.set_ylim(config['plot_config']['y_start'], config['plot_config']['y_end'])
         for pane_name in config['other_plot_config']['panes']:
             self._add_pane(pane_name)
+        self.canvas_waveform.draw()
 
 class PrintWindow(QWidget):
     def __init__(self, axes):

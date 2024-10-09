@@ -4,10 +4,13 @@ from scipy.signal import lfilter, resample
 from scipy.signal.windows import hann
 from scipy.stats import median_abs_deviation as mad
 from librosa import lpc
+import copy
 
 # from resample import resample
 
-def pitch_srh(wave, fs, f0min, f0max, hopsize=10):
+def pitch_srh(wave_original, fs, f0min, f0max, hopsize=10):
+    wave = copy.deepcopy(wave_original)
+
     if len(wave) / fs < 0.1:
         print('SRH error: the duration of your file should be at least 100ms long')
         return 0, 0, 0, 0
