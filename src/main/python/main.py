@@ -299,14 +299,16 @@ class AudioComponent(QGroupBox):
         self.__print_window.show()
         
     def save_file(self, file_path):
+        x_left, x_right = self.draggable_box.get_x_lims()
+
         config = {
             'data': self.data,
             'fs': self.fs,
             'resampled_data': self.resampled_data,
             'resampled_fs': self.resampled_fs,
             'plot_config': {
-                'x_start': self.ax_waveform.get_xlim()[0],
-                'x_end': self.ax_waveform.get_xlim()[1],
+                'x_start': x_left,
+                'x_end': x_right,
                 'y_start': self.ax_waveform.get_ylim()[0],
                 'y_end': self.ax_waveform.get_ylim()[1],
             },
@@ -323,7 +325,11 @@ class AudioComponent(QGroupBox):
         
         self.set_data(config['data'],config['fs'])
         
-        self.ax_waveform.set_xlim(config['plot_config']['x_start'], config['plot_config']['x_end'])
+        x_left, x_right = config['plot_config']['x_start'], config['plot_config']['x_end']
+
+        self.draggable_box.set_x_lims(x_left, x_right)
+
+        # self.ax_waveform.set_xlim(config['plot_config']['x_start'], config['plot_config']['x_end'])
         self.ax_waveform.set_ylim(config['plot_config']['y_start'], config['plot_config']['y_end'])
         self.canvas_waveform.draw()
         for pane_name in config['other_plot_config']['panes']:
