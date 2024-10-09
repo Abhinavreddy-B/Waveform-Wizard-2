@@ -206,37 +206,8 @@ class AudioComponent(QGroupBox):
         self.add_waveform_plot_area()
         self.update_plot()
 
-        # spect_pane = Pane_Factory.get_pane_class_by_name('Spectrogram')(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        # self.layout_area.addWidget(spect_pane)
-        # ztws_pane = Pane_Factory.get_pane_class_by_name('ZTWS')(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        # self.layout_area.addWidget(ztws_pane)
-        # gammatonegram_pane = Pane_Factory.get_pane_class_by_name('Gammatonegram')(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        # self.layout_area.addWidget(gammatonegram_pane)
-        # sff_pane = Pane_Factory.get_pane_class_by_name('SFF')(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        # self.layout_area.addWidget(sff_pane)
-        # formatPeaks_pane = Pane_Factory.get_pane_class_by_name('Formant Peaks')(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        # self.layout_area.addWidget(formatPeaks_pane)
-        # vad_pane = Pane_Factory.get_pane_class_by_name('VAD')(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        # self.layout_area.addWidget(vad_pane)
-        # contour_pane = Pane_Factory.get_pane_class_by_name('Pitch Contour')(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        # self.layout_area.addWidget(contour_pane)
-        # constantq_pane = Pane_Factory.get_pane_class_by_name('Constant-Q')(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        # self.layout_area.addWidget(constantq_pane)
-        # egg_pane = Pane_Factory.get_pane_class_by_name('EGG')(self.data, self.fs, self.resampled_data, self.resampled_fs)
-        # self.layout_area.addWidget(egg_pane)
 
-        self.__add_pane('Waveform')
-        self.__add_pane('Spectrogram')
-        self.__add_pane('ZTWS')
-        self.__add_pane('Gammatonegram')
-        self.__add_pane('SFF')
-        self.__add_pane('Formant Peaks')
-        self.__add_pane('VAD')
-        self.__add_pane('Pitch Contour')
-        self.__add_pane('Constant-Q')
-        self.__add_pane('EGG')
-
-    def __add_pane(self, pane_name):
+    def _add_pane(self, pane_name):
         pane_class = Pane_Factory.get_pane_class_by_name(pane_name)
         pane = pane_class(self.data, self.fs, self.resampled_data, self.resampled_fs, self.__delete_pane)
         self.layout_area.addWidget(pane)
@@ -325,12 +296,8 @@ class AudioComponent(QGroupBox):
                 'y_end': self.ax_waveform.get_ylim()[1],
             },
             'other_plot_config': {
-                'plot': self.get_active_radio_button(),
-                'x_start': self.ax_other.get_xlim()[0],
-                'x_end': self.ax_other.get_xlim()[1],
-                'y_start': self.ax_other.get_ylim()[0],
-                'y_end': self.ax_other.get_ylim()[1],
-            }
+                'panes': [pane.get_pane_name() for pane in self.__get_pane_list()],
+            },
         }
         with open(file_path, 'wb') as file:
             pickle.dump(config, file)
@@ -344,29 +311,8 @@ class AudioComponent(QGroupBox):
         self.ax_waveform.set_xlim(config['plot_config']['x_start'], config['plot_config']['x_end'])
         self.ax_waveform.set_ylim(config['plot_config']['y_start'], config['plot_config']['y_end'])
         self.canvas_waveform.draw()
-
-        mp = {
-            'Spectogram': [self.radioButton2, self.update_spectogram_plot],
-            'Zero Time Wind Spectrum': [self.radioButton3, self.update_zero_time_wind_spectrum_plot],
-            'Gammatonegram': [self.radioButton4, self.update_gammatonegram_plot],
-            'sff': [self.radioButton5, self.update_single_freq_filter_fs],
-            'Formant Peaks': [self.radioButton6, self.update_formant_peaks],
-            'VAD': [self.radioButton7, self.update_vad_plot],
-            'Pitch Contours': [self.radioButton9, self.update_pitch_contour_plot],
-            'Constant-Q': [self.radioButton10, self.update_constantq_plot],
-            'EGG': [self.radioButton11, self.update_egg_plot],
-        }
-
-        plot_used = config['other_plot_config']['plot']
-        btn, fn = mp[plot_used]
-        btn.setChecked(True)
-
-        def callbk():
-            self.ax_other.set_xlim(config['other_plot_config']['x_start'], config['other_plot_config']['x_end'])
-            self.ax_other.set_ylim(config['other_plot_config']['y_start'], config['other_plot_config']['y_end'])
-            self.canvas_other.draw()
-
-        self.update_in_background(fn, callbk)()
+        for pane_name in config['other_plot_config']['panes']:
+            self._add_pane(pane_name)
 
 class MainWindow(QMainWindow):
     def __init__(self, args):
@@ -383,7 +329,7 @@ class MainWindow(QMainWindow):
 
     def initUI(self):
         self.createFileMenu()
-        self.createOrientationMenu()
+        self.createPaneMenu()
         self.createMoreMenu()
 
         central_widget = QWidget(self)
@@ -439,27 +385,29 @@ class MainWindow(QMainWindow):
         save_action.triggered.connect(self.saveFile)
         file_menu.addAction(save_action)
 
-    def createOrientationMenu(self):
-        orientation_menu = self.menuBar().addMenu('Orientation')
+    def createPaneMenu(self):
+        pane_menu = self.menuBar().addMenu('Panes')
 
-        swap_files = QAction('Swap Files', self)
-        swap_files.triggered.connect(lambda: self._log_action('swapping...'))
-        orientation_menu.addAction(swap_files)
+        # Add "Add Pane" option with a submenu
+        add_pane_menu = pane_menu.addMenu("Add Pane")
 
-        horizontal_alignment_action = self.createAlignmentAction('Horizontal', 'horizontal alignment')
-        vertical_alignment_action = self.createAlignmentAction('Vertical', 'vertical alignment')
+        # List of graph pane names
+        graph_pane_names = [
+            'Waveform', 'Spectrogram', 'ZTWS', 'Gammatonegram', 
+            'SFF', 'Formant Peaks', 'VAD', 'Pitch Contour', 
+            'Constant-Q', 'EGG'
+        ]
 
-        separator_action = QAction('Alignment', self)
-        separator_action.setSeparator(True)
+        for pane_name in graph_pane_names:
+            add_pane_action = QAction(pane_name, self)
 
-        orientation_menu.addAction(separator_action)
-        orientation_menu.addAction(horizontal_alignment_action)
-        orientation_menu.addAction(vertical_alignment_action)
+            # Call the __add_pane method from AudioComponent on left_component
+            add_pane_action.triggered.connect(
+                lambda checked, p=pane_name: self.left_component._add_pane(p)
+            )
 
-        alignment_actions = QActionGroup(self)
-        alignment_actions.addAction(horizontal_alignment_action)
-        alignment_actions.addAction(vertical_alignment_action)
-        horizontal_alignment_action.setChecked(True)
+            add_pane_menu.addAction(add_pane_action)
+
 
     def createMoreMenu(self):
         file_menu = self.menuBar().addMenu('More')
@@ -471,14 +419,14 @@ class MainWindow(QMainWindow):
     def createAlignmentAction(self, text, log_text):
         alignment_action = QAction(text, self)
         alignment_action.setCheckable(True)
-        alignment_action.triggered.connect(lambda: self.change_orientation(text))
+        alignment_action.triggered.connect(lambda: self.change_pane(text))
         return alignment_action
 
-    def change_orientation(self, text):
+    def change_pane(self, text):
         if(text == 'Vertical'):
-            self.splitter.setOrientation(Qt.Vertical)
+            self.splitter.setPane(Qt.Vertical)
         else:
-            self.splitter.setOrientation(Qt.Horizontal)
+            self.splitter.setPane(Qt.Horizontal)
         print('inside, ', text)
 
     def __load_file_from_file_name(self, file_name):
