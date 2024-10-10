@@ -6,6 +6,7 @@ from time import sleep
 from typing import List
 
 import matplotlib.pyplot as plt
+import matplotlib.axes as mtAxes
 import numpy as np
 import soundfile as sf
 import pickle
@@ -128,8 +129,8 @@ class AboutInfoWindow(QDialog):
 
 
 class AudioComponent(QGroupBox):
-    def __init__(self):
-        super().__init__("Select a File to continue")
+    def __init__(self, file_name):
+        super().__init__(file_name)
         self.initUI()
 
         self.data = None
@@ -213,7 +214,7 @@ class AudioComponent(QGroupBox):
         pane_class = Pane_Factory.get_pane_class_by_name(pane_name)
         x_left, x_right = self.draggable_box.get_x_lims()
         pane = pane_class(self.data, self.fs, self.resampled_data, self.resampled_fs, self.__delete_pane, x_left, x_right)
-        pane.update_graph_x_lims(x_left, x_right)
+        # pane.update_graph_x_lims(x_left, x_right)
         self.layout_area.addWidget(pane)
 
     def __delete_pane(self, widget_object: QWidget):
@@ -229,6 +230,14 @@ class AudioComponent(QGroupBox):
                 widget_list.append(widget)
         return widget_list
     
+    def get_pane_name_list(self) -> List[str]:
+        pane_widgets = self.__get_pane_list()
+        pane_name_list = []
+        for pane in pane_widgets:
+            pane_name = pane.get_pane_name()
+            pane_name_list.append(pane_name)
+        return pane_name_list
+
     def __update_plot_x_lims(self, x_left, x_right):
         panes = self.__get_pane_list()
         print(panes)
@@ -287,7 +296,7 @@ class AudioComponent(QGroupBox):
                 return button.text()  # Returns the text of the checked radio button
         return None
 
-    def export(self):
+    def export(self) -> List[mtAxes.Axes]:
         axes = []
         axes.append(self.ax_waveform)
 
@@ -295,8 +304,9 @@ class AudioComponent(QGroupBox):
         for pane in panes:
             axes.append(pane._ax)
         
-        self.__print_window = PrintWindow(axes)
-        self.__print_window.show()
+        return axes
+        # self.__print_window = PrintWindow(axes)
+        # self.__print_window.show()
         
     def save_file(self, file_path):
         x_left, x_right = self.draggable_box.get_x_lims()
@@ -342,14 +352,14 @@ class PrintWindow(QWidget):
         self.showMaximized()
 
         self.__original_axes = axes
-        self.__n_axes = len(self.__original_axes)
+        self.__n_rows, self.__n_cols = len(self.__original_axes), len(self.__original_axes[0])
 
         # Create a matplotlib figure and canvas
-        self.__figure, self.__axes = plt.subplots(self.__n_axes, 1)
+        self.__figure, self.__axes = plt.subplots(self.__n_rows, self.__n_cols)
         self.__figure.set_constrained_layout(True)
         self.__canvas = FigureCanvas(self.__figure)
 
-        for (old_ax, new_ax) in zip(self.__original_axes, self.__axes):
+        for (old_ax, new_ax) in zip(utils.flatten_2d(self.__original_axes), utils.flatten_2d(self.__axes)):
             utils.copy_axes(old_ax, new_ax)
             # new_ax.set_xticks([])  # Remove x-ticks
             # new_ax.set_xlabel('')  # Remove x-axis title
@@ -367,7 +377,7 @@ class PrintWindow(QWidget):
         self.__title_input_layout.addWidget(self.__suptitle)
 
         self.__ax_titles = []
-        for index, _ in enumerate(self.__axes):
+        for index, _ in enumerate(utils.flatten_2d(self.__axes)):
             ax_title = QLineEdit(self)
             ax_title.setPlaceholderText(f'Graph {index}')
             self.__title_input_layout.addWidget(ax_title)
@@ -429,20 +439,20 @@ class MainWindow(QMainWindow):
         self.createMoreMenu()
 
         central_widget = QWidget(self)
-        main_layout = QVBoxLayout(central_widget)
+        self.main_layout = QVBoxLayout(central_widget)
 
-        self.splitter = QSplitter(self)
+        self.audio_layouts = QHBoxLayout()
 
-        self.left_component = AudioComponent()
-        self.right_component = AudioComponent()
-        self.splitter.addWidget(self.left_component)
+        # self.left_component = AudioComponent()
+        # self.right_component = AudioComponent()
+        # self.splitter.addWidget(self.left_component)
 
         ## Code change: self.right_component is only added when the user want to load new file. 
         ## otherwise it wont even be rendered
         ## check loadFile for more info.
         # self.splitter.addWidget(self.right_component)
 
-        main_layout.addWidget(self.splitter)
+        self.main_layout.addLayout(self.audio_layouts, 9)
 
         footer_layout = QHBoxLayout()
         footer_layout.setAlignment(Qt.AlignCenter)
@@ -458,7 +468,7 @@ class MainWindow(QMainWindow):
         logo1.setAlignment(Qt.AlignCenter)
         footer_layout.addWidget(logo1)
 
-        main_layout.addLayout(footer_layout)
+        self.main_layout.addLayout(footer_layout)
 
         self.setCentralWidget(central_widget)
 
@@ -503,11 +513,24 @@ class MainWindow(QMainWindow):
 
             # Call the __add_pane method from AudioComponent on left_component
             add_pane_action.triggered.connect(
-                lambda checked, p=pane_name: self.left_component._add_pane(p)
+                lambda checked, p=pane_name: self.__add_pane(p)
             )
 
             add_pane_menu.addAction(add_pane_action)
 
+    def __get_audio_components(self) -> List[AudioComponent]:
+        layout_list = []
+        for i in range(self.audio_layouts.count()):
+            widget = self.audio_layouts.itemAt(i).widget()
+            if isinstance(widget, AudioComponent):
+                layout_list.append(widget)
+        return layout_list
+
+    def __add_pane(self, pane_name):
+        audio_component_list = self.__get_audio_components()
+
+        for audio_component in audio_component_list:
+            audio_component._add_pane(pane_name)
 
     def createMoreMenu(self):
         file_menu = self.menuBar().addMenu('More')
@@ -522,35 +545,59 @@ class MainWindow(QMainWindow):
         alignment_action.triggered.connect(lambda: self.change_pane(text))
         return alignment_action
 
-    def change_pane(self, text):
-        if(text == 'Vertical'):
-            self.splitter.setPane(Qt.Vertical)
-        else:
-            self.splitter.setPane(Qt.Horizontal)
-        print('inside, ', text)
-
     def __invoke_export(self):
-        self.left_component.export()
+        # TODO: Rewrite
+        audio_component_list = self.__get_audio_components()
+        
+        axes_list = []
+        for audio_component in audio_component_list:
+            axes = audio_component.export()
+            axes_list.append(axes)
+
+        # Use * to unpack the lists for zip
+        axes_grid = list(zip(*axes_list))
+        axes_grid = [list(axes) for axes in axes_grid]
+
+        self.__print_window = PrintWindow(axes_grid)
+        self.__print_window.show()
+
+        # self.left_component.export()
+
+    def __get_existing_pane_list(self) -> List[str]:
+        audio_component_list = self.__get_audio_components()
+        if(len(audio_component_list) == 0):
+            return []
+        else:
+            pane_name_list = audio_component_list[0].get_pane_name_list()
+            return pane_name_list
 
     def __load_file_from_file_name(self, file_name):
         if(get_file_extension(file_name) not in ['wav', 'wwc']):
             show_error_message('File Format unsupported')
             return
 
+        initial_pane_list=self.__get_existing_pane_list()
+
         if(get_file_extension(file_name) in ['wav']):
             self._log_action(f"Selected file: {file_name}")
-            self.file_path = file_name
-            self.file_base_name = os.path.basename(file_name)
-            self.refresh_left_area()
+            file_path = file_name
+            file_base_name = os.path.basename(file_name)
+            # self.refresh_left_area()
 
-            data, samplerate = sf.read(self.file_path)
+            data, samplerate = sf.read(file_path)
 
             first_data = process_audio(data)
-            self.left_component.set_data(first_data, samplerate)
+            
+            new_audio_component = AudioComponent(file_base_name)
+            new_audio_component.set_data(first_data, samplerate)
+            self.audio_layouts.addWidget(new_audio_component)
             
             if has_second_channel(data) == True:
                 second_data = data[:, 1]
-                self.left_component.set_second_channel_data(second_data, samplerate)
+                new_audio_component.set_second_channel_data(second_data, samplerate)
+            
+            for pane in initial_pane_list:
+                new_audio_component._add_pane(pane)
 
     def __load_file_from_args(self, arg_1):
         cwd = os.getcwd()
@@ -565,57 +612,57 @@ class MainWindow(QMainWindow):
                 if(get_file_extension(fileName) in ['wav']):
                     self.__load_file_from_file_name(fileName)
                 else:
-                    self.left_component.load_file(fileName)
+                    file_base_name = os.path.basename(fileName)
+                    new_audio_component = AudioComponent(file_base_name)
+                    new_audio_component.load_file(fileName)
+                    self.audio_layouts.addWidget(new_audio_component)
             else:
                 show_error_message('Already viewing one file, open another window')
                 return
 
     def compareFiles(self):
-        options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getOpenFileName(self, "Load Single File", "", "All Files (*);;Text Files (*.txt)", options=options)
+        pass
+        # options = QFileDialog.Options()
+        # fileName, _ = QFileDialog.getOpenFileName(self, "Load Single File", "", "All Files (*);;Text Files (*.txt)", options=options)
         
-        if fileName:
-            if(get_file_extension(fileName) not in ['wav']):
-                show_error_message('File Format unsupported')
-                return
+        # if fileName:
+        #     if(get_file_extension(fileName) not in ['wav']):
+        #         show_error_message('File Format unsupported')
+        #         return
 
-            if self.file_path_2 == None:
-                self._log_action(f"Selected file: {fileName}")
-                self.file_path_2 = fileName
-                self.file_base_name_2 = os.path.basename(fileName)
-                self.refresh_right_area()
+        #     if self.file_path_2 == None:
+        #         self._log_action(f"Selected file: {fileName}")
+        #         self.file_path_2 = fileName
+        #         self.file_base_name_2 = os.path.basename(fileName)
+        #         self.refresh_right_area()
 
-                data, samplerate = sf.read(self.file_path_2)
-                first_data = process_audio(data)
-                self.right_component.set_data(first_data, samplerate)
+        #         data, samplerate = sf.read(self.file_path_2)
+        #         first_data = process_audio(data)
+        #         self.right_component.set_data(first_data, samplerate)
                 
-                if has_second_channel(data) == True:
-                    second_data = data[:, 1]
-                    self.right_component.set_second_channel_data(second_data, samplerate)
+        #         if has_second_channel(data) == True:
+        #             second_data = data[:, 1]
+        #             self.right_component.set_second_channel_data(second_data, samplerate)
 
-                self.splitter.addWidget(self.right_component)
-            else:
-                show_error_message('Already viewing one file, open another window')
-                return
+        #         self.splitter.addWidget(self.right_component)
+        #     else:
+        #         show_error_message('Already viewing one file, open another window')
+        #         return
 
     def saveFile(self):
-        options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getSaveFileName(self, "Save As", "", "Custom Files (*.wwc);;All Files (*)", options=options)
-        if fileName:
-            if not fileName.endswith('.wwc'):
-                fileName += '.wwc'
+        # TODO: Rewrite
+        pass
+        # options = QFileDialog.Options()
+        # fileName, _ = QFileDialog.getSaveFileName(self, "Save As", "", "Custom Files (*.wwc);;All Files (*)", options=options)
+        # if fileName:
+        #     if not fileName.endswith('.wwc'):
+        #         fileName += '.wwc'
             
-            self.left_component.save_file(fileName)
+        #     self.left_component.save_file(fileName)
 
     def showAbout(self):
         win = AboutInfoWindow(self)
         win.exec_()
-
-    def refresh_left_area(self):
-        self.left_component.setTitle(self.file_base_name)
-
-    def refresh_right_area(self):
-        self.right_component.setTitle(self.file_base_name_2)
 
     def _log_action(self, text):
         print(text)

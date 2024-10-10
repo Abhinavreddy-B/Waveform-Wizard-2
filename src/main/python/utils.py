@@ -92,3 +92,6 @@ def copy_axes(old_ax, new_ax):
     # Copy over the legend if it exists
     if old_ax.get_legend():
         new_ax.legend()
+
+def flatten_2d(l):
+    return [e for row in l for e in row]
