@@ -24,7 +24,7 @@ from panes.factory import Pane_Factory
 from panes.base import Pane_Base
 
 from components.draggable_box import DraggableBox
-import utils
+from print_window import PrintWindow
 
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
@@ -53,13 +53,11 @@ def show_error_message(message):
 
 def get_file_extension(file_name):
     # Use os.path.splitext to split the file name into its root and extension
-    print(file_name)
     _, extension = os.path.splitext(file_name)
     # Remove the leading '.' from the extension
     return extension[1:]
 
 def has_second_channel(audio):
-    print(audio.ndim, audio.shape)
     if audio.ndim == 1:
         return False
     elif audio.ndim == 2 and audio.shape[1] == 2:
@@ -197,7 +195,6 @@ class AudioComponent(QGroupBox):
         self.canvas_waveform.draw()
 
     def set_data(self, data, fs):
-        print(data.shape)
         self.data = data
         self.fs = fs
 
@@ -240,7 +237,6 @@ class AudioComponent(QGroupBox):
 
     def __update_plot_x_lims(self, x_left, x_right):
         panes = self.__get_pane_list()
-        print(panes)
         for pane in panes:
             pane.update_graph_x_lims(x_left, x_right)
 
@@ -298,7 +294,7 @@ class AudioComponent(QGroupBox):
 
     def export(self) -> List[mtAxes.Axes]:
         axes = []
-        axes.append(self.ax_waveform)
+        # axes.append(self.ax_waveform)
 
         panes = self.__get_pane_list()
         for pane in panes:
@@ -344,81 +340,6 @@ class AudioComponent(QGroupBox):
         for pane_name in config['other_plot_config']['panes']:
             self._add_pane(pane_name)
         self.canvas_waveform.draw()
-
-class PrintWindow(QWidget):
-    def __init__(self, axes):
-        super().__init__()
-        self.setWindowTitle("Export")
-        self.showMaximized()
-
-        self.__original_axes = axes
-        self.__n_rows, self.__n_cols = len(self.__original_axes), len(self.__original_axes[0])
-
-        # Create a matplotlib figure and canvas
-        self.__figure, self.__axes = plt.subplots(self.__n_rows, self.__n_cols)
-        self.__figure.set_constrained_layout(True)
-        self.__canvas = FigureCanvas(self.__figure)
-
-        for (old_ax, new_ax) in zip(utils.flatten_2d(self.__original_axes), utils.flatten_2d(self.__axes)):
-            utils.copy_axes(old_ax, new_ax)
-            # new_ax.set_xticks([])  # Remove x-ticks
-            # new_ax.set_xlabel('')  # Remove x-axis title
-            # new_ax.set_ylabel(new_ax.get_ylabel(), rotation=0)
-
-        self.__preview_layout = QVBoxLayout()
-        self.__preview_layout.addWidget(self.__canvas)
-        self.__preview_box = QGroupBox('Preview')
-        self.__preview_box.setLayout(self.__preview_layout)
-        
-        self.__title_input_layout = QVBoxLayout()
-
-        self.__suptitle = QLineEdit(self)
-        self.__suptitle.setPlaceholderText('Title...')
-        self.__title_input_layout.addWidget(self.__suptitle)
-
-        self.__ax_titles = []
-        for index, _ in enumerate(utils.flatten_2d(self.__axes)):
-            ax_title = QLineEdit(self)
-            ax_title.setPlaceholderText(f'Graph {index}')
-            self.__title_input_layout.addWidget(ax_title)
-            self.__ax_titles.append(ax_title)
-
-        self.__preview_button = QPushButton('Preview', self)
-        self.__preview_button.clicked.connect(self.__update_title)
-        self.__title_input_layout.addWidget(self.__preview_button)
-
-        self.__title_input_layout
-        self.__title_input_box = QGroupBox('Titles')
-        self.__title_input_box.setLayout(self.__title_input_layout)
-
-        layout = QHBoxLayout()
-        layout.addWidget(self.__preview_box, 5)
-        layout.addWidget(self.__title_input_box, 1)
-
-        # layout.
-        self.setLayout(layout)
-
-    def __on_text_change(self):
-        # Every time the text changes, reset and restart the timer
-        self.timer.start(1000)
-
-    def __update_title(self):
-        suptitle = self.__suptitle.text()
-        ax_titles_text = []
-        for ax_title in self.__ax_titles:
-            text = ax_title.text()
-            ax_titles_text.append(text)
-        
-        def __background():
-            self.__figure.suptitle(suptitle)
-            for ax, ax_title_box in zip(self.__axes, self.__ax_titles):
-                title = ax_title_box.text()
-                ax.set_title(title)
-
-            self.__canvas.draw()
-        
-        thread = threading.Thread(None, __background)
-        thread.start()
 
 class MainWindow(QMainWindow):
     def __init__(self, args):
@@ -665,7 +586,6 @@ class MainWindow(QMainWindow):
         win.exec_()
 
     def _log_action(self, text):
-        print(text)
         self.logs.append(text)
 
 if __name__ == '__main__':

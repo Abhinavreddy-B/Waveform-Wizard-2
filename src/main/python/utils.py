@@ -5,7 +5,6 @@ import matplotlib.patches as mpatches
 def copy_axes(old_ax, new_ax):
     # Copy lines
     for line in old_ax.get_lines():
-        print(line)
         new_line = mlines.Line2D(
             line.get_xdata(),
             line.get_ydata(),
