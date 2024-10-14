@@ -37,7 +37,6 @@ class Pane_FormantPeaks(Pane_Base):
         T_sp1, F_sp1 = np.meshgrid(ts_sp1, fs_sp1)
 
         
-        print(T_sp1.shape, F_sp1.shape, ts_sp1.shape, fs_sp1.shape, s1.shape)
         self._ax.pcolormesh(T_sp1, F_sp1, np.abs(s1), cmap='gray')
 
         tf0 = np.arange(len(F0s)) * 0.01

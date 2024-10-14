@@ -24,7 +24,7 @@ from panes.factory import Pane_Factory
 from panes.base import Pane_Base
 
 from components.draggable_box import DraggableBox
-import utils
+from print_window import PrintWindow
 
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
@@ -53,13 +53,11 @@ def show_error_message(message):
 
 def get_file_extension(file_name):
     # Use os.path.splitext to split the file name into its root and extension
-    print(file_name)
     _, extension = os.path.splitext(file_name)
     # Remove the leading '.' from the extension
     return extension[1:]
 
 def has_second_channel(audio):
-    print(audio.ndim, audio.shape)
     if audio.ndim == 1:
         return False
     elif audio.ndim == 2 and audio.shape[1] == 2:
@@ -78,53 +76,103 @@ def process_audio(audio):
     else:
         # Invalid audio format
         raise ValueError("Invalid audio format")
-class AboutInfoWindow(QDialog):
+
+class AboutInfoWindow(PPGLifeCycle,QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("About This App")
 
         # Create layout
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)  # Align content to the top
 
         # Version number
-        version_label = QLabel(f"Version: {meta_info['version']}")
-        version_label.setAlignment(Qt.AlignCenter)
+        version_label = QLabel(f"<b>Version:</b> {meta_info['version']}")
+        version_label.setAlignment(Qt.AlignLeft)
         layout.addWidget(version_label)
 
+        # GitHub repository link
+        repo_label = QLabel('<a href="https://github.com/Abhinavreddy-B/Waveform-Wizard-2">GitHub Repository</a>')
+        repo_label.setOpenExternalLinks(True)
+        repo_label.setAlignment(Qt.AlignLeft)
+        layout.addWidget(repo_label)
+
+        layout.addSpacing(25)  # Add spacing after the repo link
+
+        # "About Us" section header
+        about_header = QLabel("<b>About Us</b>")
+        about_header.setAlignment(Qt.AlignLeft)
+        layout.addWidget(about_header)
+        
+        layout.addSpacing(15)  # Add spacing before logos
+        
         # Logos
+        logo_path = self.get_resource('images/logo.png')  # Adjust the path based on where you placed the image
         logo1 = QLabel()
-        pixmap1 = QPixmap("../icons/iiith.jpeg")  # Update with actual path
+
+        pixmap1 = QPixmap(logo_path)  # Update with actual path
         logo1.setPixmap(pixmap1)
         logo1.setAlignment(Qt.AlignCenter)
+        layout.addWidget(logo1)
+
+        layout.addSpacing(15)  # Add spacing before logos
         
-        logo2 = QLabel()
-        pixmap2 = QPixmap("path/to/logo2.png")  # Update with actual path
-        logo2.setPixmap(pixmap2)
-        logo2.setAlignment(Qt.AlignCenter)
+        # SPCRC description
+        description_label = QLabel(
+            "Signal Processing and Communication Research Center (SPCRC) is one of the highly active research centers at IIIT-H focusing on the various areas of communications and signal processing. "
+            "The center provides an umbrella environment for faculty, undergraduate, and postgraduate students to carry out research in various aspects related to the respective fields."
+        )
+        description_label.setWordWrap(True)
+        description_label.setAlignment(Qt.AlignLeft)
+        description_label.setStyleSheet("QLabel { line-height: 3; }")  # Set line height for description
+        layout.addWidget(description_label)
+        
 
-        logo_layout = QHBoxLayout()
-        logo_layout.addWidget(logo1)
-        logo_layout.addWidget(logo2)
-        layout.addLayout(logo_layout)
+        layout.addSpacing(25)  # Add spacing after the logo
 
-        # Trademark/Ownership mark
-        trademark_label = QLabel("© Speech Processing Lab (SPL), IIITH. All rights reserved.")
+        # Contact details header
+        contact_header = QLabel("<b>Contact Details</b>")
+        contact_header.setAlignment(Qt.AlignLeft)
+        layout.addWidget(contact_header)
+
+        # Contact information as link
+        contact_link = QLabel('<a href="http://spcrc.iiit.ac.in">http://spcrc.iiit.ac.in</a>')
+        contact_link.setOpenExternalLinks(True)  # Make the link clickable
+        contact_link.setAlignment(Qt.AlignLeft)
+        layout.addWidget(contact_link)
+
+        layout.addSpacing(5)  # Add spacing between link and text
+
+        # Other contact details formatted as an address
+        contact_info = QLabel(
+            "Signal Processing and Communication Research Centre (SPCRC)<br>"
+            "IIIT Hyderabad<br>"
+            "Gachibowli<br>"
+            "Hyderabad, India - 500032"
+        )
+
+        contact_info.setAlignment(Qt.AlignLeft)
+        contact_info.setWordWrap(True)  # Ensure text wraps properly
+        contact_info.setStyleSheet("QLabel { line-height: 3; }")  # Set line height for contact info
+        layout.addWidget(contact_info)
+
+        
+        # layout.addSpacing(15)  # Add spacing before the trademark
+        layout.addStretch()  # Add stretchable space to push footer down
+
+
+        # Footer (trademark/ownership mark)
+        trademark_label = QLabel("© Signal Processing and Communication Research Center (SPCRC). All rights reserved.")
         trademark_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(trademark_label)
 
-        # Git repository link
-        repo_label = QLabel('<a href="https://github.com/Abhinavreddy-B/Waveform-Wizard-2">GitHub Repository</a>')
-        repo_label.setOpenExternalLinks(True)
-        repo_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(repo_label)
-
-        # Close button
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(self.accept)
-        layout.addWidget(close_button)
 
         # Set layout for the dialog
         self.setLayout(layout)
+
+        # Set the size similar to the main window
+        self.setGeometry(100, 100, 800, 600)  # Adjust dimensions as needed
+        self.setWindowFlags(Qt.Window)  # Keep standard window decorations
 
 
 class AudioComponent(QGroupBox):
@@ -196,7 +244,6 @@ class AudioComponent(QGroupBox):
         self.canvas_waveform.draw()
 
     def set_data(self, data, fs):
-        print(data.shape)
         self.data = data
         self.fs = fs
 
@@ -297,7 +344,7 @@ class AudioComponent(QGroupBox):
 
     def export(self) -> List[mtAxes.Axes]:
         axes = []
-        axes.append(self.ax_waveform)
+        # axes.append(self.ax_waveform)
 
         panes = self._get_pane_list()
         for pane in panes:
@@ -344,82 +391,7 @@ class AudioComponent(QGroupBox):
             self._add_pane(pane_name)
         self.canvas_waveform.draw()
 
-class PrintWindow(QWidget):
-    def __init__(self, axes):
-        super().__init__()
-        self.setWindowTitle("Export")
-        self.showMaximized()
-
-        self.__original_axes = axes
-        self.__n_rows, self.__n_cols = len(self.__original_axes), len(self.__original_axes[0])
-
-        # Create a matplotlib figure and canvas
-        self.__figure, self.__axes = plt.subplots(self.__n_rows, self.__n_cols)
-        self.__figure.set_constrained_layout(True)
-        self.__canvas = FigureCanvas(self.__figure)
-
-        for (old_ax, new_ax) in zip(utils.flatten_2d(self.__original_axes), utils.flatten_2d(self.__axes)):
-            utils.copy_axes(old_ax, new_ax)
-            # new_ax.set_xticks([])  # Remove x-ticks
-            # new_ax.set_xlabel('')  # Remove x-axis title
-            # new_ax.set_ylabel(new_ax.get_ylabel(), rotation=0)
-
-        self.__preview_layout = QVBoxLayout()
-        self.__preview_layout.addWidget(self.__canvas)
-        self.__preview_box = QGroupBox('Preview')
-        self.__preview_box.setLayout(self.__preview_layout)
-        
-        self.__title_input_layout = QVBoxLayout()
-
-        self.__suptitle = QLineEdit(self)
-        self.__suptitle.setPlaceholderText('Title...')
-        self.__title_input_layout.addWidget(self.__suptitle)
-
-        self.__ax_titles = []
-        for index, _ in enumerate(utils.flatten_2d(self.__axes)):
-            ax_title = QLineEdit(self)
-            ax_title.setPlaceholderText(f'Graph {index}')
-            self.__title_input_layout.addWidget(ax_title)
-            self.__ax_titles.append(ax_title)
-
-        self.__preview_button = QPushButton('Preview', self)
-        self.__preview_button.clicked.connect(self.__update_title)
-        self.__title_input_layout.addWidget(self.__preview_button)
-
-        self.__title_input_layout
-        self.__title_input_box = QGroupBox('Titles')
-        self.__title_input_box.setLayout(self.__title_input_layout)
-
-        layout = QHBoxLayout()
-        layout.addWidget(self.__preview_box, 5)
-        layout.addWidget(self.__title_input_box, 1)
-
-        # layout.
-        self.setLayout(layout)
-
-    def __on_text_change(self):
-        # Every time the text changes, reset and restart the timer
-        self.timer.start(1000)
-
-    def __update_title(self):
-        suptitle = self.__suptitle.text()
-        ax_titles_text = []
-        for ax_title in self.__ax_titles:
-            text = ax_title.text()
-            ax_titles_text.append(text)
-        
-        def __background():
-            self.__figure.suptitle(suptitle)
-            for ax, ax_title_box in zip(self.__axes, self.__ax_titles):
-                title = ax_title_box.text()
-                ax.set_title(title)
-
-            self.__canvas.draw()
-        
-        thread = threading.Thread(None, __background)
-        thread.start()
-
-class MainWindow(QMainWindow):
+class MainWindow(PPGLifeCycle,QMainWindow):
     def __init__(self, args):
         super().__init__()
         self.logs = []
@@ -461,7 +433,8 @@ class MainWindow(QMainWindow):
         footer_layout.addWidget(trademark_label)
 
         logo1 = QLabel()
-        pixmap1 = QPixmap("../icons/iiith-2.png")  # Update with actual path
+        logo1_path=self.get_resource('images/logo1.png')
+        pixmap1 = QPixmap(logo1_path)  # Update with actual path
         scaled_pixmap = pixmap1.scaled(50, 50, Qt.KeepAspectRatio)
         logo1.setPixmap(scaled_pixmap)
         logo1.setAlignment(Qt.AlignCenter)
@@ -493,6 +466,15 @@ class MainWindow(QMainWindow):
         save_action = QAction('Save File', self)
         save_action.triggered.connect(self.saveFile)
         file_menu.addAction(save_action)
+        
+        new_window_action = QAction('New Window', self)
+        new_window_action.triggered.connect(self.open_new_window)
+        file_menu.addAction(new_window_action)
+        
+    def open_new_window(self):
+        """Create and show a new instance of MainWindow."""
+        self.new_window = MainWindow(args=[])  # You can pass arguments if needed
+        self.new_window.show()
 
     def createPaneMenu(self):
         pane_menu = self.menuBar().addMenu('Panes')
@@ -715,7 +697,6 @@ class MainWindow(QMainWindow):
         win.exec_()
 
     def _log_action(self, text):
-        print(text)
         self.logs.append(text)
 
 if __name__ == '__main__':
