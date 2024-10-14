@@ -78,7 +78,6 @@ def process_audio(audio):
     else:
         # Invalid audio format
         raise ValueError("Invalid audio format")
-
 class AboutInfoWindow(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -132,7 +131,7 @@ class AudioComponent(QGroupBox):
     def __init__(self, file_name):
         super().__init__(file_name)
         self.initUI()
-
+        self.file_name = file_name
         self.data = None
         self.fs = None
         self.resampled_data = None
@@ -222,7 +221,7 @@ class AudioComponent(QGroupBox):
         self.layout_area.update()
         widget_object.deleteLater()
 
-    def __get_pane_list(self) -> List[Pane_Base]:
+    def _get_pane_list(self) -> List[Pane_Base]:
         widget_list = []
         for i in range(self.layout_area.count()):
             widget = self.layout_area.itemAt(i).widget()
@@ -231,7 +230,7 @@ class AudioComponent(QGroupBox):
         return widget_list
     
     def get_pane_name_list(self) -> List[str]:
-        pane_widgets = self.__get_pane_list()
+        pane_widgets = self._get_pane_list()
         pane_name_list = []
         for pane in pane_widgets:
             pane_name = pane.get_pane_name()
@@ -239,7 +238,7 @@ class AudioComponent(QGroupBox):
         return pane_name_list
 
     def __update_plot_x_lims(self, x_left, x_right):
-        panes = self.__get_pane_list()
+        panes = self._get_pane_list()
         print(panes)
         for pane in panes:
             pane.update_graph_x_lims(x_left, x_right)
@@ -300,7 +299,7 @@ class AudioComponent(QGroupBox):
         axes = []
         axes.append(self.ax_waveform)
 
-        panes = self.__get_pane_list()
+        panes = self._get_pane_list()
         for pane in panes:
             axes.append(pane._ax)
         
@@ -323,7 +322,7 @@ class AudioComponent(QGroupBox):
                 'y_end': self.ax_waveform.get_ylim()[1],
             },
             'other_plot_config': {
-                'panes': [pane.get_pane_name() for pane in self.__get_pane_list()],
+                'panes': [pane.get_pane_name() for pane in self._get_pane_list()],
             },
         }
         with open(file_path, 'wb') as file:
@@ -603,6 +602,55 @@ class MainWindow(QMainWindow):
         cwd = os.getcwd()
         resolved_path = os.path.abspath(os.path.join(cwd, arg_1))
         self.__load_file_from_file_name(resolved_path)
+    def __save_file(self, file_path):
+        audio_component_list = self.__get_audio_components()
+        if len(audio_component_list) == 0:
+            show_error_message('No file loaded')
+            return
+
+        all_configs = []
+
+        # Iterate over each audio component and generate its config
+        for component in audio_component_list:
+            x_left, x_right = component.draggable_box.get_x_lims()
+            config = {
+                'file_name': component.file_name,
+                'data': component.data,
+                'fs': component.fs,
+                'resampled_data': component.resampled_data,
+                'resampled_fs': component.resampled_fs,
+                'plot_config': {
+                    'x_start': x_left,
+                    'x_end': x_right,
+                    'y_start': component.ax_waveform.get_ylim()[0],
+                    'y_end': component.ax_waveform.get_ylim()[1],
+                },
+                'other_plot_config': {
+                    'panes': [pane.get_pane_name() for pane in component._get_pane_list()],
+                },
+            }
+            all_configs.append(config)
+
+        # Dump all configs to the specified file as a pickle
+        with open(file_path, 'wb') as f:
+            pickle.dump(all_configs, f)
+    
+    def __load_file(self, file_path):
+        with open(file_path, 'rb') as file:
+            config = pickle.load(file)
+        # console.log(config)
+        for audio_component in config:
+            new_audio_component = AudioComponent(audio_component['file_name'])
+            new_audio_component.set_data(audio_component['data'], audio_component['fs'])
+            new_audio_component.x_left = audio_component['plot_config']['x_start']
+            new_audio_component.x_right = audio_component['plot_config']['x_end']
+            new_audio_component.ax_waveform.set_ylim(audio_component['plot_config']['y_start'], audio_component['plot_config']['y_end'])
+            for pane in audio_component['other_plot_config']['panes']:
+                new_audio_component._add_pane(pane)
+            self.audio_layouts.addWidget(new_audio_component)
+        
+            
+        
 
     def __invoke_file_picker(self):
         options = QFileDialog.Options()
@@ -613,9 +661,10 @@ class MainWindow(QMainWindow):
                     self.__load_file_from_file_name(fileName)
                 else:
                     file_base_name = os.path.basename(fileName)
-                    new_audio_component = AudioComponent(file_base_name)
-                    new_audio_component.load_file(fileName)
-                    self.audio_layouts.addWidget(new_audio_component)
+                    self.__load_file(fileName)
+                    # new_audio_component = AudioComponent(file_base_name)
+                    # new_audio_component.load_file(fileName)
+                    # self.audio_layouts.addWidget(new_audio_component)
             else:
                 show_error_message('Already viewing one file, open another window')
                 return
@@ -650,13 +699,14 @@ class MainWindow(QMainWindow):
         #         return
 
     def saveFile(self):
-        # TODO: Rewrite
-        pass
-        # options = QFileDialog.Options()
-        # fileName, _ = QFileDialog.getSaveFileName(self, "Save As", "", "Custom Files (*.wwc);;All Files (*)", options=options)
-        # if fileName:
-        #     if not fileName.endswith('.wwc'):
-        #         fileName += '.wwc'
+        # # TODO: Rewrite
+        # pass
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getSaveFileName(self, "Save As", "", "Custom Files (*.wwc);;All Files (*)", options=options)
+        if fileName:
+            if not fileName.endswith('.wwc'):
+                fileName += '.wwc'
+        self.__save_file(fileName)
             
         #     self.left_component.save_file(fileName)
 
