@@ -77,53 +77,102 @@ def process_audio(audio):
         # Invalid audio format
         raise ValueError("Invalid audio format")
 
-class AboutInfoWindow(QDialog):
+class AboutInfoWindow(PPGLifeCycle,QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("About This App")
 
         # Create layout
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)  # Align content to the top
 
         # Version number
-        version_label = QLabel(f"Version: {meta_info['version']}")
-        version_label.setAlignment(Qt.AlignCenter)
+        version_label = QLabel(f"<b>Version:</b> {meta_info['version']}")
+        version_label.setAlignment(Qt.AlignLeft)
         layout.addWidget(version_label)
 
+        # GitHub repository link
+        repo_label = QLabel('<a href="https://github.com/Abhinavreddy-B/Waveform-Wizard-2">GitHub Repository</a>')
+        repo_label.setOpenExternalLinks(True)
+        repo_label.setAlignment(Qt.AlignLeft)
+        layout.addWidget(repo_label)
+
+        layout.addSpacing(25)  # Add spacing after the repo link
+
+        # "About Us" section header
+        about_header = QLabel("<b>About Us</b>")
+        about_header.setAlignment(Qt.AlignLeft)
+        layout.addWidget(about_header)
+        
+        layout.addSpacing(15)  # Add spacing before logos
+        
         # Logos
+        logo_path = self.get_resource('images/logo.png')  # Adjust the path based on where you placed the image
         logo1 = QLabel()
-        pixmap1 = QPixmap("../icons/iiith.jpeg")  # Update with actual path
+
+        pixmap1 = QPixmap(logo_path)  # Update with actual path
         logo1.setPixmap(pixmap1)
         logo1.setAlignment(Qt.AlignCenter)
+        layout.addWidget(logo1)
+
+        layout.addSpacing(15)  # Add spacing before logos
         
-        logo2 = QLabel()
-        pixmap2 = QPixmap("path/to/logo2.png")  # Update with actual path
-        logo2.setPixmap(pixmap2)
-        logo2.setAlignment(Qt.AlignCenter)
+        # SPCRC description
+        description_label = QLabel(
+            "Signal Processing and Communication Research Center (SPCRC) is one of the highly active research centers at IIIT-H focusing on the various areas of communications and signal processing. "
+            "The center provides an umbrella environment for faculty, undergraduate, and postgraduate students to carry out research in various aspects related to the respective fields."
+        )
+        description_label.setWordWrap(True)
+        description_label.setAlignment(Qt.AlignLeft)
+        description_label.setStyleSheet("QLabel { line-height: 3; }")  # Set line height for description
+        layout.addWidget(description_label)
+        
 
-        logo_layout = QHBoxLayout()
-        logo_layout.addWidget(logo1)
-        logo_layout.addWidget(logo2)
-        layout.addLayout(logo_layout)
+        layout.addSpacing(25)  # Add spacing after the logo
 
-        # Trademark/Ownership mark
-        trademark_label = QLabel("© Speech Processing Lab (SPL), IIITH. All rights reserved.")
+        # Contact details header
+        contact_header = QLabel("<b>Contact Details</b>")
+        contact_header.setAlignment(Qt.AlignLeft)
+        layout.addWidget(contact_header)
+
+        # Contact information as link
+        contact_link = QLabel('<a href="http://spcrc.iiit.ac.in">http://spcrc.iiit.ac.in</a>')
+        contact_link.setOpenExternalLinks(True)  # Make the link clickable
+        contact_link.setAlignment(Qt.AlignLeft)
+        layout.addWidget(contact_link)
+
+        layout.addSpacing(5)  # Add spacing between link and text
+
+        # Other contact details formatted as an address
+        contact_info = QLabel(
+            "Signal Processing and Communication Research Centre (SPCRC)<br>"
+            "IIIT Hyderabad<br>"
+            "Gachibowli<br>"
+            "Hyderabad, India - 500032"
+        )
+
+        contact_info.setAlignment(Qt.AlignLeft)
+        contact_info.setWordWrap(True)  # Ensure text wraps properly
+        contact_info.setStyleSheet("QLabel { line-height: 3; }")  # Set line height for contact info
+        layout.addWidget(contact_info)
+
+        
+        # layout.addSpacing(15)  # Add spacing before the trademark
+        layout.addStretch()  # Add stretchable space to push footer down
+
+
+        # Footer (trademark/ownership mark)
+        trademark_label = QLabel("© Signal Processing and Communication Research Center (SPCRC). All rights reserved.")
         trademark_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(trademark_label)
 
-        # Git repository link
-        repo_label = QLabel('<a href="https://github.com/Abhinavreddy-B/Waveform-Wizard-2">GitHub Repository</a>')
-        repo_label.setOpenExternalLinks(True)
-        repo_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(repo_label)
-
-        # Close button
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(self.accept)
-        layout.addWidget(close_button)
 
         # Set layout for the dialog
         self.setLayout(layout)
+
+        # Set the size similar to the main window
+        self.setGeometry(100, 100, 800, 600)  # Adjust dimensions as needed
+        self.setWindowFlags(Qt.Window)  # Keep standard window decorations
 
 
 class AudioComponent(QGroupBox):
@@ -341,7 +390,7 @@ class AudioComponent(QGroupBox):
             self._add_pane(pane_name)
         self.canvas_waveform.draw()
 
-class MainWindow(QMainWindow):
+class MainWindow(PPGLifeCycle,QMainWindow):
     def __init__(self, args):
         super().__init__()
         self.logs = []
@@ -383,7 +432,8 @@ class MainWindow(QMainWindow):
         footer_layout.addWidget(trademark_label)
 
         logo1 = QLabel()
-        pixmap1 = QPixmap("../icons/iiith-2.png")  # Update with actual path
+        logo1_path=self.get_resource('images/logo1.png')
+        pixmap1 = QPixmap(logo1_path)  # Update with actual path
         scaled_pixmap = pixmap1.scaled(50, 50, Qt.KeepAspectRatio)
         logo1.setPixmap(scaled_pixmap)
         logo1.setAlignment(Qt.AlignCenter)
