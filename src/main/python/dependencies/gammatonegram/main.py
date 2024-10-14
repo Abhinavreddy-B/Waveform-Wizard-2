@@ -374,8 +374,7 @@ def plot_gammatone(data, fs):
     time_bins_g = YG.shape[1]
     ts_g = np.arange(0, time_bins_g) * len(data) / time_bins_g
     ts_g = ts_g / fs
-    T_g, F_g = np.meshgrid(ts_g, fg)
-    print(T_g.shape, F_g.shape)    
+    T_g, F_g = np.meshgrid(ts_g, fg) 
     plot_gammatone_2d(T_g, F_g, np.abs(YG))
 
 if __name__ == '__main__':

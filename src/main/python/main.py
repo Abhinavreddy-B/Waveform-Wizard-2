@@ -6,6 +6,7 @@ from time import sleep
 from typing import List
 
 import matplotlib.pyplot as plt
+import matplotlib.axes as mtAxes
 import numpy as np
 import soundfile as sf
 import pickle
@@ -23,7 +24,7 @@ from panes.factory import Pane_Factory
 from panes.base import Pane_Base
 
 from components.draggable_box import DraggableBox
-import utils
+from print_window import PrintWindow
 
 from matplotlib.backends.backend_qt5agg import \
     FigureCanvasQTAgg as FigureCanvas
@@ -52,13 +53,11 @@ def show_error_message(message):
 
 def get_file_extension(file_name):
     # Use os.path.splitext to split the file name into its root and extension
-    print(file_name)
     _, extension = os.path.splitext(file_name)
     # Remove the leading '.' from the extension
     return extension[1:]
 
 def has_second_channel(audio):
-    print(audio.ndim, audio.shape)
     if audio.ndim == 1:
         return False
     elif audio.ndim == 2 and audio.shape[1] == 2:
@@ -78,58 +77,107 @@ def process_audio(audio):
         # Invalid audio format
         raise ValueError("Invalid audio format")
 
-class AboutInfoWindow(QDialog):
+class AboutInfoWindow(PPGLifeCycle,QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("About This App")
 
         # Create layout
         layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)  # Align content to the top
 
         # Version number
-        version_label = QLabel(f"Version: {meta_info['version']}")
-        version_label.setAlignment(Qt.AlignCenter)
+        version_label = QLabel(f"<b>Version:</b> {meta_info['version']}")
+        version_label.setAlignment(Qt.AlignLeft)
         layout.addWidget(version_label)
 
+        # GitHub repository link
+        repo_label = QLabel('<a href="https://github.com/Abhinavreddy-B/Waveform-Wizard-2">GitHub Repository</a>')
+        repo_label.setOpenExternalLinks(True)
+        repo_label.setAlignment(Qt.AlignLeft)
+        layout.addWidget(repo_label)
+
+        layout.addSpacing(25)  # Add spacing after the repo link
+
+        # "About Us" section header
+        about_header = QLabel("<b>About Us</b>")
+        about_header.setAlignment(Qt.AlignLeft)
+        layout.addWidget(about_header)
+        
+        layout.addSpacing(15)  # Add spacing before logos
+        
         # Logos
+        logo_path = self.get_resource('images/logo.png')  # Adjust the path based on where you placed the image
         logo1 = QLabel()
-        pixmap1 = QPixmap("../icons/iiith.jpeg")  # Update with actual path
+
+        pixmap1 = QPixmap(logo_path)  # Update with actual path
         logo1.setPixmap(pixmap1)
         logo1.setAlignment(Qt.AlignCenter)
+        layout.addWidget(logo1)
+
+        layout.addSpacing(15)  # Add spacing before logos
         
-        logo2 = QLabel()
-        pixmap2 = QPixmap("path/to/logo2.png")  # Update with actual path
-        logo2.setPixmap(pixmap2)
-        logo2.setAlignment(Qt.AlignCenter)
+        # SPCRC description
+        description_label = QLabel(
+            "Signal Processing and Communication Research Center (SPCRC) is one of the highly active research centers at IIIT-H focusing on the various areas of communications and signal processing. "
+            "The center provides an umbrella environment for faculty, undergraduate, and postgraduate students to carry out research in various aspects related to the respective fields."
+        )
+        description_label.setWordWrap(True)
+        description_label.setAlignment(Qt.AlignLeft)
+        description_label.setStyleSheet("QLabel { line-height: 3; }")  # Set line height for description
+        layout.addWidget(description_label)
+        
 
-        logo_layout = QHBoxLayout()
-        logo_layout.addWidget(logo1)
-        logo_layout.addWidget(logo2)
-        layout.addLayout(logo_layout)
+        layout.addSpacing(25)  # Add spacing after the logo
 
-        # Trademark/Ownership mark
-        trademark_label = QLabel("© Speech Processing Lab (SPL), IIITH. All rights reserved.")
+        # Contact details header
+        contact_header = QLabel("<b>Contact Details</b>")
+        contact_header.setAlignment(Qt.AlignLeft)
+        layout.addWidget(contact_header)
+
+        # Contact information as link
+        contact_link = QLabel('<a href="http://spcrc.iiit.ac.in">http://spcrc.iiit.ac.in</a>')
+        contact_link.setOpenExternalLinks(True)  # Make the link clickable
+        contact_link.setAlignment(Qt.AlignLeft)
+        layout.addWidget(contact_link)
+
+        layout.addSpacing(5)  # Add spacing between link and text
+
+        # Other contact details formatted as an address
+        contact_info = QLabel(
+            "Signal Processing and Communication Research Centre (SPCRC)<br>"
+            "IIIT Hyderabad<br>"
+            "Gachibowli<br>"
+            "Hyderabad, India - 500032"
+        )
+
+        contact_info.setAlignment(Qt.AlignLeft)
+        contact_info.setWordWrap(True)  # Ensure text wraps properly
+        contact_info.setStyleSheet("QLabel { line-height: 3; }")  # Set line height for contact info
+        layout.addWidget(contact_info)
+
+        
+        # layout.addSpacing(15)  # Add spacing before the trademark
+        layout.addStretch()  # Add stretchable space to push footer down
+
+
+        # Footer (trademark/ownership mark)
+        trademark_label = QLabel("© Signal Processing and Communication Research Center (SPCRC). All rights reserved.")
         trademark_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(trademark_label)
 
-        # Git repository link
-        repo_label = QLabel('<a href="https://github.com/Abhinavreddy-B/Waveform-Wizard-2">GitHub Repository</a>')
-        repo_label.setOpenExternalLinks(True)
-        repo_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(repo_label)
-
-        # Close button
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(self.accept)
-        layout.addWidget(close_button)
 
         # Set layout for the dialog
         self.setLayout(layout)
 
+        # Set the size similar to the main window
+        self.setGeometry(100, 100, 800, 600)  # Adjust dimensions as needed
+        self.setWindowFlags(Qt.Window)  # Keep standard window decorations
+
 
 class AudioComponent(QGroupBox):
-    def __init__(self):
-        super().__init__("Select a File to continue")
+    def __init__(self, file_name):
+        super().__init__(file_name)
         self.initUI()
 
         self.data = None
@@ -196,7 +244,6 @@ class AudioComponent(QGroupBox):
         self.canvas_waveform.draw()
 
     def set_data(self, data, fs):
-        print(data.shape)
         self.data = data
         self.fs = fs
 
@@ -213,7 +260,7 @@ class AudioComponent(QGroupBox):
         pane_class = Pane_Factory.get_pane_class_by_name(pane_name)
         x_left, x_right = self.draggable_box.get_x_lims()
         pane = pane_class(self.data, self.fs, self.resampled_data, self.resampled_fs, self.__delete_pane, x_left, x_right)
-        pane.update_graph_x_lims(x_left, x_right)
+        # pane.update_graph_x_lims(x_left, x_right)
         self.layout_area.addWidget(pane)
 
     def __delete_pane(self, widget_object: QWidget):
@@ -229,9 +276,16 @@ class AudioComponent(QGroupBox):
                 widget_list.append(widget)
         return widget_list
     
+    def get_pane_name_list(self) -> List[str]:
+        pane_widgets = self.__get_pane_list()
+        pane_name_list = []
+        for pane in pane_widgets:
+            pane_name = pane.get_pane_name()
+            pane_name_list.append(pane_name)
+        return pane_name_list
+
     def __update_plot_x_lims(self, x_left, x_right):
         panes = self.__get_pane_list()
-        print(panes)
         for pane in panes:
             pane.update_graph_x_lims(x_left, x_right)
 
@@ -287,16 +341,17 @@ class AudioComponent(QGroupBox):
                 return button.text()  # Returns the text of the checked radio button
         return None
 
-    def export(self):
+    def export(self) -> List[mtAxes.Axes]:
         axes = []
-        axes.append(self.ax_waveform)
+        # axes.append(self.ax_waveform)
 
         panes = self.__get_pane_list()
         for pane in panes:
             axes.append(pane._ax)
         
-        self.__print_window = PrintWindow(axes)
-        self.__print_window.show()
+        return axes
+        # self.__print_window = PrintWindow(axes)
+        # self.__print_window.show()
         
     def save_file(self, file_path):
         x_left, x_right = self.draggable_box.get_x_lims()
@@ -335,82 +390,7 @@ class AudioComponent(QGroupBox):
             self._add_pane(pane_name)
         self.canvas_waveform.draw()
 
-class PrintWindow(QWidget):
-    def __init__(self, axes):
-        super().__init__()
-        self.setWindowTitle("Export")
-        self.showMaximized()
-
-        self.__original_axes = axes
-        self.__n_axes = len(self.__original_axes)
-
-        # Create a matplotlib figure and canvas
-        self.__figure, self.__axes = plt.subplots(self.__n_axes, 1)
-        self.__figure.set_constrained_layout(True)
-        self.__canvas = FigureCanvas(self.__figure)
-
-        for (old_ax, new_ax) in zip(self.__original_axes, self.__axes):
-            utils.copy_axes(old_ax, new_ax)
-            # new_ax.set_xticks([])  # Remove x-ticks
-            # new_ax.set_xlabel('')  # Remove x-axis title
-            # new_ax.set_ylabel(new_ax.get_ylabel(), rotation=0)
-
-        self.__preview_layout = QVBoxLayout()
-        self.__preview_layout.addWidget(self.__canvas)
-        self.__preview_box = QGroupBox('Preview')
-        self.__preview_box.setLayout(self.__preview_layout)
-        
-        self.__title_input_layout = QVBoxLayout()
-
-        self.__suptitle = QLineEdit(self)
-        self.__suptitle.setPlaceholderText('Title...')
-        self.__title_input_layout.addWidget(self.__suptitle)
-
-        self.__ax_titles = []
-        for index, _ in enumerate(self.__axes):
-            ax_title = QLineEdit(self)
-            ax_title.setPlaceholderText(f'Graph {index}')
-            self.__title_input_layout.addWidget(ax_title)
-            self.__ax_titles.append(ax_title)
-
-        self.__preview_button = QPushButton('Preview', self)
-        self.__preview_button.clicked.connect(self.__update_title)
-        self.__title_input_layout.addWidget(self.__preview_button)
-
-        self.__title_input_layout
-        self.__title_input_box = QGroupBox('Titles')
-        self.__title_input_box.setLayout(self.__title_input_layout)
-
-        layout = QHBoxLayout()
-        layout.addWidget(self.__preview_box, 5)
-        layout.addWidget(self.__title_input_box, 1)
-
-        # layout.
-        self.setLayout(layout)
-
-    def __on_text_change(self):
-        # Every time the text changes, reset and restart the timer
-        self.timer.start(1000)
-
-    def __update_title(self):
-        suptitle = self.__suptitle.text()
-        ax_titles_text = []
-        for ax_title in self.__ax_titles:
-            text = ax_title.text()
-            ax_titles_text.append(text)
-        
-        def __background():
-            self.__figure.suptitle(suptitle)
-            for ax, ax_title_box in zip(self.__axes, self.__ax_titles):
-                title = ax_title_box.text()
-                ax.set_title(title)
-
-            self.__canvas.draw()
-        
-        thread = threading.Thread(None, __background)
-        thread.start()
-
-class MainWindow(QMainWindow):
+class MainWindow(PPGLifeCycle,QMainWindow):
     def __init__(self, args):
         super().__init__()
         self.logs = []
@@ -429,20 +409,20 @@ class MainWindow(QMainWindow):
         self.createMoreMenu()
 
         central_widget = QWidget(self)
-        main_layout = QVBoxLayout(central_widget)
+        self.main_layout = QVBoxLayout(central_widget)
 
-        self.splitter = QSplitter(self)
+        self.audio_layouts = QHBoxLayout()
 
-        self.left_component = AudioComponent()
-        self.right_component = AudioComponent()
-        self.splitter.addWidget(self.left_component)
+        # self.left_component = AudioComponent()
+        # self.right_component = AudioComponent()
+        # self.splitter.addWidget(self.left_component)
 
         ## Code change: self.right_component is only added when the user want to load new file. 
         ## otherwise it wont even be rendered
         ## check loadFile for more info.
         # self.splitter.addWidget(self.right_component)
 
-        main_layout.addWidget(self.splitter)
+        self.main_layout.addLayout(self.audio_layouts, 9)
 
         footer_layout = QHBoxLayout()
         footer_layout.setAlignment(Qt.AlignCenter)
@@ -452,13 +432,14 @@ class MainWindow(QMainWindow):
         footer_layout.addWidget(trademark_label)
 
         logo1 = QLabel()
-        pixmap1 = QPixmap("../icons/iiith-2.png")  # Update with actual path
+        logo1_path=self.get_resource('images/logo1.png')
+        pixmap1 = QPixmap(logo1_path)  # Update with actual path
         scaled_pixmap = pixmap1.scaled(50, 50, Qt.KeepAspectRatio)
         logo1.setPixmap(scaled_pixmap)
         logo1.setAlignment(Qt.AlignCenter)
         footer_layout.addWidget(logo1)
 
-        main_layout.addLayout(footer_layout)
+        self.main_layout.addLayout(footer_layout)
 
         self.setCentralWidget(central_widget)
 
@@ -512,11 +493,24 @@ class MainWindow(QMainWindow):
 
             # Call the __add_pane method from AudioComponent on left_component
             add_pane_action.triggered.connect(
-                lambda checked, p=pane_name: self.left_component._add_pane(p)
+                lambda checked, p=pane_name: self.__add_pane(p)
             )
 
             add_pane_menu.addAction(add_pane_action)
 
+    def __get_audio_components(self) -> List[AudioComponent]:
+        layout_list = []
+        for i in range(self.audio_layouts.count()):
+            widget = self.audio_layouts.itemAt(i).widget()
+            if isinstance(widget, AudioComponent):
+                layout_list.append(widget)
+        return layout_list
+
+    def __add_pane(self, pane_name):
+        audio_component_list = self.__get_audio_components()
+
+        for audio_component in audio_component_list:
+            audio_component._add_pane(pane_name)
 
     def createMoreMenu(self):
         file_menu = self.menuBar().addMenu('More')
@@ -531,35 +525,59 @@ class MainWindow(QMainWindow):
         alignment_action.triggered.connect(lambda: self.change_pane(text))
         return alignment_action
 
-    def change_pane(self, text):
-        if(text == 'Vertical'):
-            self.splitter.setPane(Qt.Vertical)
-        else:
-            self.splitter.setPane(Qt.Horizontal)
-        print('inside, ', text)
-
     def __invoke_export(self):
-        self.left_component.export()
+        # TODO: Rewrite
+        audio_component_list = self.__get_audio_components()
+        
+        axes_list = []
+        for audio_component in audio_component_list:
+            axes = audio_component.export()
+            axes_list.append(axes)
+
+        # Use * to unpack the lists for zip
+        axes_grid = list(zip(*axes_list))
+        axes_grid = [list(axes) for axes in axes_grid]
+
+        self.__print_window = PrintWindow(axes_grid)
+        self.__print_window.show()
+
+        # self.left_component.export()
+
+    def __get_existing_pane_list(self) -> List[str]:
+        audio_component_list = self.__get_audio_components()
+        if(len(audio_component_list) == 0):
+            return []
+        else:
+            pane_name_list = audio_component_list[0].get_pane_name_list()
+            return pane_name_list
 
     def __load_file_from_file_name(self, file_name):
         if(get_file_extension(file_name) not in ['wav', 'wwc']):
             show_error_message('File Format unsupported')
             return
 
+        initial_pane_list=self.__get_existing_pane_list()
+
         if(get_file_extension(file_name) in ['wav']):
             self._log_action(f"Selected file: {file_name}")
-            self.file_path = file_name
-            self.file_base_name = os.path.basename(file_name)
-            self.refresh_left_area()
+            file_path = file_name
+            file_base_name = os.path.basename(file_name)
+            # self.refresh_left_area()
 
-            data, samplerate = sf.read(self.file_path)
+            data, samplerate = sf.read(file_path)
 
             first_data = process_audio(data)
-            self.left_component.set_data(first_data, samplerate)
+            
+            new_audio_component = AudioComponent(file_base_name)
+            new_audio_component.set_data(first_data, samplerate)
+            self.audio_layouts.addWidget(new_audio_component)
             
             if has_second_channel(data) == True:
                 second_data = data[:, 1]
-                self.left_component.set_second_channel_data(second_data, samplerate)
+                new_audio_component.set_second_channel_data(second_data, samplerate)
+            
+            for pane in initial_pane_list:
+                new_audio_component._add_pane(pane)
 
     def __load_file_from_args(self, arg_1):
         cwd = os.getcwd()
@@ -574,60 +592,59 @@ class MainWindow(QMainWindow):
                 if(get_file_extension(fileName) in ['wav']):
                     self.__load_file_from_file_name(fileName)
                 else:
-                    self.left_component.load_file(fileName)
+                    file_base_name = os.path.basename(fileName)
+                    new_audio_component = AudioComponent(file_base_name)
+                    new_audio_component.load_file(fileName)
+                    self.audio_layouts.addWidget(new_audio_component)
             else:
                 show_error_message('Already viewing one file, open another window')
                 return
 
     def compareFiles(self):
-        options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getOpenFileName(self, "Load Single File", "", "All Files (*);;Text Files (*.txt)", options=options)
+        pass
+        # options = QFileDialog.Options()
+        # fileName, _ = QFileDialog.getOpenFileName(self, "Load Single File", "", "All Files (*);;Text Files (*.txt)", options=options)
         
-        if fileName:
-            if(get_file_extension(fileName) not in ['wav']):
-                show_error_message('File Format unsupported')
-                return
+        # if fileName:
+        #     if(get_file_extension(fileName) not in ['wav']):
+        #         show_error_message('File Format unsupported')
+        #         return
 
-            if self.file_path_2 == None:
-                self._log_action(f"Selected file: {fileName}")
-                self.file_path_2 = fileName
-                self.file_base_name_2 = os.path.basename(fileName)
-                self.refresh_right_area()
+        #     if self.file_path_2 == None:
+        #         self._log_action(f"Selected file: {fileName}")
+        #         self.file_path_2 = fileName
+        #         self.file_base_name_2 = os.path.basename(fileName)
+        #         self.refresh_right_area()
 
-                data, samplerate = sf.read(self.file_path_2)
-                first_data = process_audio(data)
-                self.right_component.set_data(first_data, samplerate)
+        #         data, samplerate = sf.read(self.file_path_2)
+        #         first_data = process_audio(data)
+        #         self.right_component.set_data(first_data, samplerate)
                 
-                if has_second_channel(data) == True:
-                    second_data = data[:, 1]
-                    self.right_component.set_second_channel_data(second_data, samplerate)
+        #         if has_second_channel(data) == True:
+        #             second_data = data[:, 1]
+        #             self.right_component.set_second_channel_data(second_data, samplerate)
 
-                self.splitter.addWidget(self.right_component)
-            else:
-                show_error_message('Already viewing one file, open another window')
-                return
+        #         self.splitter.addWidget(self.right_component)
+        #     else:
+        #         show_error_message('Already viewing one file, open another window')
+        #         return
 
     def saveFile(self):
-        options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getSaveFileName(self, "Save As", "", "Custom Files (*.wwc);;All Files (*)", options=options)
-        if fileName:
-            if not fileName.endswith('.wwc'):
-                fileName += '.wwc'
+        # TODO: Rewrite
+        pass
+        # options = QFileDialog.Options()
+        # fileName, _ = QFileDialog.getSaveFileName(self, "Save As", "", "Custom Files (*.wwc);;All Files (*)", options=options)
+        # if fileName:
+        #     if not fileName.endswith('.wwc'):
+        #         fileName += '.wwc'
             
-            self.left_component.save_file(fileName)
+        #     self.left_component.save_file(fileName)
 
     def showAbout(self):
         win = AboutInfoWindow(self)
         win.exec_()
 
-    def refresh_left_area(self):
-        self.left_component.setTitle(self.file_base_name)
-
-    def refresh_right_area(self):
-        self.right_component.setTitle(self.file_base_name_2)
-
     def _log_action(self, text):
-        print(text)
         self.logs.append(text)
 
 if __name__ == '__main__':
