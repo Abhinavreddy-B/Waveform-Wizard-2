@@ -484,6 +484,15 @@ class MainWindow(QMainWindow):
         save_action = QAction('Save File', self)
         save_action.triggered.connect(self.saveFile)
         file_menu.addAction(save_action)
+        
+        new_window_action = QAction('New Window', self)
+        new_window_action.triggered.connect(self.open_new_window)
+        file_menu.addAction(new_window_action)
+        
+    def open_new_window(self):
+        """Create and show a new instance of MainWindow."""
+        self.new_window = MainWindow(args=[])  # You can pass arguments if needed
+        self.new_window.show()
 
     def createPaneMenu(self):
         pane_menu = self.menuBar().addMenu('Panes')
