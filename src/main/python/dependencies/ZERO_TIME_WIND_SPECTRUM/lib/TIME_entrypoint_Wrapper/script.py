@@ -87,7 +87,6 @@ def plot_ztws(data, fs):
     
     T, F = np.meshgrid(tz, fz)
     
-    print(T.shape, F.shape)    
     plot_ztws_2d(T, F, result_HNGD_SPEC)
     # fig = plt.figure()
     # ax = fig.add_subplot(111, projection='3d')

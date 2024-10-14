@@ -48,8 +48,6 @@ class Pane_Base(QWidget):
         context_menu.exec_(event.globalPos())
 
     def update_graph_x_lims(self, x_left, x_right):
-        print('Updating inside', self._pane_name, x_left, x_right)
-        print('Current limits', self._ax.get_xlim())
         self._ax.set_xlim((x_left, x_right))
         self.__canvas.draw()
 
@@ -76,7 +74,6 @@ class Pane_Base(QWidget):
     def __delete_pane(self):
         '''To be implemented'''
         self.__delete_callback(self)
-        print('Deleting this pane', self._pane_name)
         
     def get_pane_name(self):
         return self._pane_name
